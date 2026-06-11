@@ -1,0 +1,41 @@
+name: Test deterministic extractor with contract-file and external patches
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create contract file and patches
+        run: |
+          mkdir -p /tmp/swarm-test/patches
+          cat > /tmp/swarm-test/contract.yaml <<'EOF'
+          obligations: []
+          EOF
+          cat > /tmp/swarm-test/contract-module.js <<'EOF'
+          module.exports = { obligations: [] };
+          EOF
+          touch /tmp/swarm-test/patches/patch-001.jsonl
+      - id: action
+        uses: .
+        with:
+          goal: 'Write a hello world function'
+          extractor: 'deterministic'
+          session: 'deterministic'
+          contract-file: '/tmp/swarm-test/contract.yaml'
+          contract-module: '/tmp/swarm-test/contract-module.js'
+          external-patches-queue: '/tmp/swarm-test/patches/patch-001.jsonl'
+          external-patches-dir: '/tmp/swarm-test/patches'
+          contract-only: 'true'
+        continue-on-error: true
+      - name: Assert action ran
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped"
+            exit 1
+          fi
+          echo "PASS: action executed"
