@@ -1,6 +1,6 @@
 # moonrunnerkc/swarm-orchestrator
 
-Contract-first AI coding swarm. Compiles a goal into typed obligations, races persona candidates per obligation, verifies before commit.
+Audits PRs opened by AI coding agents for cheat patterns (test relaxation, mock-of-hallucination, assertion strip, no-op fix). Posts findings as a PR comment and gates merges on blocking results. Also runs the legacy v8 orchestrator pipeline when invoked with goal/contract-path.
 
 Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/moonrunnerkc/swarm-orchestrator](https://github.com/moonrunnerkc/swarm-orchestrator).
 
