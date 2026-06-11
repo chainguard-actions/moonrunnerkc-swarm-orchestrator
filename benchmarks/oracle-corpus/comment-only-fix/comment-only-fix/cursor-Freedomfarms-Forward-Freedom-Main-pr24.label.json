@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "src/components/BudgetCommandCenter.jsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/Freedomfarms/Forward-Freedom-Main/pull/24",
+  "prTitle": "Align Income and Budget hero month navigation sizing",
+  "sha256": "fd024d565102be97e235e3455695965dbc36a6955db52198a5e1489f3196d5f2"
+}

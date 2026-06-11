@@ -1,0 +1,11 @@
+{
+  "category": "no-op-fix",
+  "injectorId": "no-op-fix",
+  "file": "internal/domain/ai/mock_repo_phase10.go",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 3,
+  "sourcePrUrl": "https://github.com/divord97/ccc/pull/13",
+  "prTitle": "Phase 10: Scaling + Hardening — Annotation Management, LLM Gateway, WebRTC Quality (DDD/TDD)",
+  "sha256": "2375ccd9ec43807133af9d645eaae136e4aeb1673bd1c80cf446beb2938baadf"
+}

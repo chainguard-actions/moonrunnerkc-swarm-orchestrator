@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "src/components/demographics/AddressForm.jsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/getum06/LaundromatFacilityBuy/pull/8",
+  "prTitle": "feat: Google Places API competitor auto-fetch in Demographics module",
+  "sha256": "d066ab8b7b976c1aeb0740e05c9fcdee9fe7d9584bf6abd61cb14cde6e3b48cc"
+}

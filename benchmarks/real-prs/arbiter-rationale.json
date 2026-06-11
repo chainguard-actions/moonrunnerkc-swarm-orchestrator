@@ -1,0 +1,74 @@
+[
+  {
+    "key": "nrwl/nx#34951:error-swallow:packages/nx/bin/init-local.ts:37",
+    "repo": "nrwl/nx",
+    "prNumber": 34951,
+    "verdict": "false-alarm",
+    "confidence": 0.92,
+    "reasoning": "The empty catch block is not newly introduced by this PR — it already existed in the original code (the diff shows the same `try { await ensureNxConsoleInstalledViaDaemon(); } catch {}` block being moved inside a new `if (!process.env.NX_COMPLETE)` guard). The PR merely wraps the pre-existing logic in a condition to avoid spawning the daemon during shell completion. The error-swallowing behavior is unchanged and is a deliberate, well-scoped design choice: failing to ensure an optional NxConsole install should not break normal CLI invocation. The auditor's deterministic detector fired on the textual presence of `catch {}` in the added lines, but it is the same swallow that was already there, not a regression hidden behind a relaxed check.",
+    "arbiterModel": "claude-opus-4-8"
+  },
+  {
+    "key": "nrwl/nx#34951:error-swallow:packages/nx/bin/nx.ts:40",
+    "repo": "nrwl/nx",
+    "prNumber": 34951,
+    "verdict": "false-alarm",
+    "confidence": 0.93,
+    "reasoning": "This is a correctly-scoped, intentional error swallow in a shell tab-completion fast path. The semantics demand that a broken completion produce no suggestions rather than splicing a stack trace into the user's command line, which is exactly what proper shell completion contracts require. The error is not silently lost: it is surfaced to stderr when NX_VERBOSE_LOGGING is set, and the comments document the rationale clearly. This is legitimate observability/UX shaping, not a regression-hiding swallow; the auditor's own body-class note even acknowledges this is 'typically legitimate observability shape.'",
+    "arbiterModel": "claude-opus-4-8"
+  },
+  {
+    "key": "nrwl/nx#34951:error-swallow:packages/nx/src/command-line/completion/infix-targets.ts:1",
+    "repo": "nrwl/nx",
+    "prNumber": 34951,
+    "verdict": "false-alarm",
+    "confidence": 0.9,
+    "reasoning": "The empty catch block is correctly scoped and intentional: it wraps readCachedProjectGraph(), which may legitimately fail or be absent in cold/uninitialized workspaces. The code already pre-seeds targetNames with CONVENTIONAL_TARGETS, and the comment explicitly documents the fallback behavior ('No cached graph — conventional set only.'). For a shell tab-completion feature, failing to read the cached graph should degrade gracefully to a conventional set of target names rather than crash or block completion entirely. This is exactly the kind of correctly-scoped, behavior-preserving error handling that the instructions describe as a false alarm, not a swallowed error masking a regression.",
+    "arbiterModel": "claude-opus-4-8"
+  },
+  {
+    "key": "trpc/trpc#7296:no-op-fix:.github/workflows/main.yml:1",
+    "repo": "trpc/trpc",
+    "prNumber": 7296,
+    "verdict": "false-alarm",
+    "confidence": 0.85,
+    "reasoning": "The PR is a chore titled 'Add cache checks for openapi router fixtures,' and the diff slice shows exactly that: a CI step that verifies committed openapi test fixtures are up to date by checking git status and failing if they drift. This is the core deliverable and it is plainly present and functional. The auditor's complaint about generate.ts simplifying JSDoc filtering being 'unrelated to caching' misreads the PR's scope—this is a chore/tooling PR, not a feature with a code fix that tests must exercise. The no-op-fix category requires that a claimed fix isn't actually delivered; here the claimed work (CI fixture verification) IS delivered. There's no relaxed test, stripped assertion, or swallowed error. The auditor itself notes deterministic checks did not fire and relied on a debatable intent reading.",
+    "arbiterModel": "claude-opus-4-8"
+  },
+  {
+    "key": "vercel/next.js#93879:assertion-strip:test/e2e/app-dir/instant-validation/instant-validation-parallel-slots.test.ts:607",
+    "repo": "vercel/next.js",
+    "prNumber": 93879,
+    "verdict": "insufficient-context",
+    "confidence": 0,
+    "reasoning": "unparseable: The auditor flagged that the build-validation branch dropped its assertions: previously the `else` branch asserted a detailed error message via `toMatchInlineSnapshot` plus `expect(result.exitCode).toBe(1)`, and now just calls `expectBuildValidationSkipped(result)`. The key question is whether this ",
+    "arbiterModel": "claude-opus-4-8"
+  },
+  {
+    "key": "vercel/next.js#93879:assertion-strip:test/e2e/app-dir/instant-validation/instant-validation-parallel-slots.test.ts:629",
+    "repo": "vercel/next.js",
+    "prNumber": 93879,
+    "verdict": "insufficient-context",
+    "confidence": 0,
+    "reasoning": "unparseable: The key concern is that two `expect(result.exitCode).toBe(1)` assertions (along with detailed error snapshots) were replaced with `expectBuildValidationSkipped(result)`. This is a semantic inversion: the old test asserted that the build FAILED (exit code 1) with a validation error, while the new tes",
+    "arbiterModel": "claude-opus-4-8"
+  },
+  {
+    "key": "vercel/next.js#93879:assertion-strip:test/e2e/app-dir/instant-validation/instant-validation-parallel-slots.test.ts:666",
+    "repo": "vercel/next.js",
+    "prNumber": 93879,
+    "verdict": "debatable",
+    "confidence": 0.55,
+    "reasoning": "The dev-mode branch was legitimately updated to the new redesigned overlay format, which is a fair refactor. The concern is the build-mode branch: it previously asserted a specific error message AND that exitCode === 1 (build fails), and now asserts only expectBuildValidationSkipped(result). The diff comment claims that build-time pattern matching 'doesn't resolve through (group)/ so the route is skipped entirely (no validation markers emitted)' — meaning the build now succeeds where it previously failed with exit code 1. If this reflects a genuine behavioral change (the redesign), then expectBuildValidationSkipped is the correct new contract and not a cheat. But it could also mask a real regression where build validation that used to catch the unrendered segment now silently skips it. Without seeing the implementation of expectBuildValidationSkipped and whether the route-group skipping is intended behavior, this sits between false-alarm and a real loss-of-coverage concern; the dropped exitCode===1 assertion is exactly the kind of safety check that matters here, so I cannot confidently call it a clean false alarm.",
+    "arbiterModel": "claude-opus-4-8"
+  },
+  {
+    "key": "vercel/next.js#93879:assertion-strip:test/e2e/app-dir/instant-validation/instant-validation-parallel-slots.test.ts:688",
+    "repo": "vercel/next.js",
+    "prNumber": 93879,
+    "verdict": "false-alarm",
+    "confidence": 0.78,
+    "reasoning": "The diff shows the assertions were not stripped to hide a regression; they were replaced. The dev-mode redbox assertion was updated to the new error format (E1286, new source UI), and the build-mode branch replaced the inline-snapshot + exitCode==1 assertion with a call to expectBuildValidationSkipped(result), with an explanatory comment that build-time pattern matching doesn't resolve through (group)/ so the route is legitimately skipped. The exitCode==1 check was removed because the expected behavior changed (no longer an error in build mode for this route-group case), and a new helper presumably asserts the skipped contract. The raw assertion count dropped, but a new helper assertion was added that verifies the new expected behavior. The only caveat is that expectBuildValidationSkipped is defined in an untouched file, so we can't fully verify it asserts something meaningful—but the change is clearly an intentional, documented behavior alignment rather than a cheat, so the finding (assertions removed without equivalents) is wrong.",
+    "arbiterModel": "claude-opus-4-8"
+  }
+]

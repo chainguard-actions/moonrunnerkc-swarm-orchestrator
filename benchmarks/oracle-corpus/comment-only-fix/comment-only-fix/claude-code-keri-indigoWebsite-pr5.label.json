@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "js/nav.js",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/keri/indigoWebsite/pull/5",
+  "prTitle": "Link Instagram footer button to indisartbook",
+  "sha256": "bd1251b73220165e598b6a6928d7852da229b4de938c5c0a65a3b4a7b9a9b7c0"
+}

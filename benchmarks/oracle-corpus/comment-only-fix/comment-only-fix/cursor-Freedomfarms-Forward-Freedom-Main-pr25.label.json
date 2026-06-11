@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "src/utils/accountRemovalSummary.js",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/Freedomfarms/Forward-Freedom-Main/pull/25",
+  "prTitle": "Command Center: True Cash metric card and current-month cash flow only",
+  "sha256": "cf6601aa361c4b61dbf398ffd01f476ee1ff1e23cc45775896aedc711a32fa21"
+}

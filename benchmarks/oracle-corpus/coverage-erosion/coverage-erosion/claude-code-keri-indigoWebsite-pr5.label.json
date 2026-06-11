@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "js/nav.js",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/keri/indigoWebsite/pull/5",
+  "prTitle": "Link Instagram footer button to indisartbook",
+  "sha256": "96e6c8ef7f4c69a8c46b3e26b1610a9c2c337cb19df1b933a4e3c0c589f94f9e"
+}

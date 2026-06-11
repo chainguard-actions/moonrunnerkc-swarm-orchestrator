@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "build/patch-casaos-ui.cjs",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/dockur/casa/pull/39",
+  "prTitle": "fix: redirect @icewhale/icewhale-files-openapi to @yundera mirror in Dockerfile build",
+  "sha256": "8c0efab9a389a9feb9c0464f0e5b2bb1d545ef520eff01319c96047eed54c5b9"
+}

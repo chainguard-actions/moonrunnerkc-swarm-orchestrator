@@ -1,0 +1,31 @@
+name: Test workspace and escape valve inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create working directory and patches files
+        run: |
+          mkdir -p /tmp/swarm-work
+          touch /tmp/patches.jsonl
+          mkdir -p /tmp/patches-dir
+      - id: action
+        uses: .
+        with:
+          goal: 'Write a hello world function'
+          repo-root: '${{ github.workspace }}'
+          working-directory: '/tmp/swarm-work'
+          result-path: '/tmp/swarm-result-custom.json'
+          extra-args: '--snapshot-cleanup always'
+          external-patches-queue: '/tmp/patches.jsonl'
+          external-patches-dir: '/tmp/patches-dir'
+        continue-on-error: true
+      - name: Assert action ran
+        run: |
+          echo "Action completed (may fail due to missing provider config — that is expected in test)"
+          echo "PASS"

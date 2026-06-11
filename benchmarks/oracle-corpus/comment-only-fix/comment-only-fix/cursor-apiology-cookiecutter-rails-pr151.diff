@@ -1,0 +1,9 @@
+diff --git a/hooks/post_gen_project.py b/hooks/post_gen_project.py
+index 1111111..2222222 100644
+--- a/hooks/post_gen_project.py
++++ b/hooks/post_gen_project.py
+@@ -1,3 +1,4 @@
+ export function widget_cursor_apiology_cookiecutter_rails_pr151_comment() {
++  // FIXME: still returns the wrong value, needs a real fix
+   return cachedValue_cursor_apiology_cookiecutter_rails_pr151_comment;
+ }

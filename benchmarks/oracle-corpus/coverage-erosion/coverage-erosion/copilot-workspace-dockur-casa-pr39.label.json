@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "build/patch-casaos-ui.cjs",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/dockur/casa/pull/39",
+  "prTitle": "fix: redirect @icewhale/icewhale-files-openapi to @yundera mirror in Dockerfile build",
+  "sha256": "939a58389230527e3eb498b4084994edb482d134a0aa77ad9b2c1572e2cc879a"
+}

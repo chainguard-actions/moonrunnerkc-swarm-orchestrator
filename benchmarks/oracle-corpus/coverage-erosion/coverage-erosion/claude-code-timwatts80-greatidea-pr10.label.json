@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "src/app/api/v1/content/hero/route.ts",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/timwatts80/greatidea/pull/10",
+  "prTitle": "/thanks: solo voice + header logo links home",
+  "sha256": "d5cce31276214ca0bdf43042c8d27ea22ae31127e60e06629f1c9da8ba4421d5"
+}

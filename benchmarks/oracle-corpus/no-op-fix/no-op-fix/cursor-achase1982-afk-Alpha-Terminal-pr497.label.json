@@ -1,0 +1,11 @@
+{
+  "category": "no-op-fix",
+  "injectorId": "no-op-fix",
+  "file": "artifacts/api-server/src/lib/ensureMoversCatalystCacheSchema.ts",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 3,
+  "sourcePrUrl": "https://github.com/achase1982-afk/Alpha-Terminal/pull/497",
+  "prTitle": "Movers: deterministic catalyst, lazy cached read, plain catalyst labels",
+  "sha256": "0544f6b28328b5ad9ddc13296f88d39828bd906316e03bcf1f7328e1ed7160d7"
+}

@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "src/chat/reef/widget-prelude.ts",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/DukkyGames/Minnow/pull/60",
+  "prTitle": "Harden Reef chart widgets with lint, check tool, and silent repair",
+  "sha256": "de655291a34f26271425ce466250d5c4d2c0cdc4bc2680e495d0adeab92e33a7"
+}

@@ -1,0 +1,12 @@
+{
+  "category": "goal-not-fixed",
+  "injectorId": "goal-not-fixed",
+  "file": "frontend/src/injected_goal_cursor_detvildevestendk_code_shiny_spork_pr5_goa.ts",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/detvildevestendk-code/shiny-spork/pull/5",
+  "prTitle": "Fix first_cursor_detvildevestendk_code_shiny_spork_pr5_goa: return a safe default instead of crashing on empty input",
+  "claim": "Fix first_cursor_detvildevestendk_code_shiny_spork_pr5_goa: return a safe default instead of crashing on empty input",
+  "sha256": "7cef30348222206a0307becfa0f0393740962dd8ecfe031e2c7746ea0d1deff2"
+}

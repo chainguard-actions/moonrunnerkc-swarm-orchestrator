@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "src/components/TimeRangeInput.tsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/drenlia/teamcal/pull/3",
+  "prTitle": "French i18n, language switcher, toasts, and shift delete",
+  "sha256": "a515f901e17e1ce434644ef2c7e6d7179d96f133bf1f34ee9bf5094716375ad7"
+}

@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "src/anthropic/_streaming.py",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/anthropics/anthropic-sdk-python/pull/1550",
+  "prTitle": "Wrap mid-stream httpx.TransportError as APIConnectionError",
+  "sha256": "7fc2b532f1f1751808b0f3fffd8e7c8f0cca768cdcf63814d390f75d410f1197"
+}
