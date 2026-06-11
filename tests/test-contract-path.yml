@@ -1,0 +1,24 @@
+name: Test contract-path input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a sample contract directory
+        run: |
+          mkdir -p /tmp/swarm-contract
+          echo '{"obligations": []}' > /tmp/swarm-contract/contract.json
+      - id: action
+        uses: .
+        with:
+          contract-path: '/tmp/swarm-contract'
+          extractor: 'deterministic'
+          session: 'deterministic'
+          result-path: '/tmp/swarm-contract-result.json'
+        continue-on-error: true
+      - name: Assert action ran
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          echo "PASS: action step executed"

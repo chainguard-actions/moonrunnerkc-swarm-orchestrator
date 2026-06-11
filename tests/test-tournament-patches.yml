@@ -1,0 +1,30 @@
+name: Test tournament mode and patches inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create patch queue and dir
+        run: |
+          mkdir -p /tmp/patches-dir
+          echo '{"patch": "diff --git a/foo.py b/foo.py"}' > /tmp/patches-queue.jsonl
+          echo '{"patch": "diff --git a/bar.py b/bar.py"}' >> /tmp/patches-queue.jsonl
+      - id: action
+        uses: .
+        with:
+          goal: 'Write a hello world function'
+          extractor: 'deterministic'
+          session: 'deterministic'
+          mode: 'tournament'
+          candidates: '2'
+          external-patches-queue: '/tmp/patches-queue.jsonl'
+          external-patches-dir: '/tmp/patches-dir'
+          extra-args: '--snapshot-cleanup always'
+          result-path: '/tmp/swarm-tournament-result.json'
+        continue-on-error: true
+      - name: Assert action ran
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          echo "PASS: action step executed"

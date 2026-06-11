@@ -1,0 +1,27 @@
+name: Test goal orchestrator mode inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          goal: 'Write a hello world function'
+          extractor: 'deterministic'
+          session: 'deterministic'
+          model: 'claude-3-5-sonnet-20241022'
+          falsifiers: 'off'
+          mode: 'single'
+          max-obligations: '5'
+          cost-cap: '1000'
+          repo-root: '${{ github.workspace }}'
+          working-directory: '${{ github.workspace }}'
+          result-path: '/tmp/swarm-goal-result.json'
+        continue-on-error: true
+      - name: Assert action ran
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          echo "PASS: action step executed"

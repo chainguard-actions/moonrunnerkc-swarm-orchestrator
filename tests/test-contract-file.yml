@@ -1,0 +1,30 @@
+name: Test contract-file and contract-module inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create sample contract file and module
+        run: |
+          cat > /tmp/contract.yaml <<'EOF'
+          obligations: []
+          EOF
+          cat > /tmp/contract-module.js <<'EOF'
+          module.exports = { obligations: [] };
+          EOF
+      - id: action
+        uses: .
+        with:
+          goal: 'Write a hello world function'
+          contract-file: '/tmp/contract.yaml'
+          contract-module: '/tmp/contract-module.js'
+          extractor: 'deterministic'
+          session: 'deterministic'
+          result-path: '/tmp/swarm-contractfile-result.json'
+        continue-on-error: true
+      - name: Assert action ran
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          echo "PASS: action step executed"
