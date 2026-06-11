@@ -1,0 +1,139 @@
+"use strict";
+/**
+ * Phase 4 run-resumption helpers. Given a ledger file, derive the
+ * population state needed to continue a partially-completed run without
+ * redoing satisfied work.
+ *
+ * The resume protocol is deliberately conservative:
+ *
+ *   - Only obligations explicitly marked `obligation-satisfied` (or
+ *     `obligation-memoized`) in a prior run with the SAME contractHash
+ *     are considered satisfied. Same-run satisfactions count too — a
+ *     resume against a partial in-place run is the common case.
+ *   - Obligations marked `obligation-failed` are reset to `pending`;
+ *     resume re-attempts them.
+ *   - Tournaments-in-flight (a `tournament-round-started` entry without
+ *     a matching winner/escalation) are treated as discarded; the
+ *     obligation is `pending` again and the next run reruns it from
+ *     scratch. The bound on cost is the round-cap-of-3 rule.
+ *
+ * The helpers here read the ledger and return the derived state; they
+ * do not mutate the ledger. The caller (the resume CLI handler) is
+ * responsible for writing a `run-resumed` marker entry before
+ * dispatching the population manager.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ResumeError = void 0;
+exports.deriveResumeState = deriveResumeState;
+exports.memoizedEntriesForResume = memoizedEntriesForResume;
+const errors_1 = require("../errors");
+const memoization_1 = require("./memoization");
+/**
+ * Mapping from domain-specific ResumeError code to SwarmError-level code.
+ */
+const RESUME_CODE_MAP = {
+    'no-run-started': 'RESUME_NO_RUN_STARTED',
+    'contract-hash-mismatch': 'RESUME_HASH_MISMATCH',
+    'no-obligations': 'RESUME_NO_OBLIGATIONS',
+};
+/**
+ * Error thrown when the ledger doesn't carry enough state to resume
+ * cleanly. Distinct from `ChainTamperedError` which signals tamper.
+ *
+ * The `code` property retains the domain-specific code for backward
+ * compatibility; the SwarmError-level code is available via the base
+ * class `code` field (which gets overwritten by this subclass's
+ * narrower `code` declaration). Use `swarmCode` for the unified code.
+ */
+class ResumeError extends errors_1.SwarmError {
+    code;
+    constructor(message, code, remediation) {
+        super(message, RESUME_CODE_MAP[code], remediation !== undefined ? { remediation } : undefined);
+        this.name = 'ResumeError';
+        this.code = code;
+    }
+}
+exports.ResumeError = ResumeError;
+/**
+ * Derive resume state from a list of ledger entries plus the contract
+ * the caller wants to resume against. The contract serves two roles:
+ *   - confirms the contractHash matches at least one prior run-started
+ *     entry (otherwise resume is suspicious — different contract);
+ *   - supplies the canonical obligation order so pending indexes line
+ *     up correctly.
+ */
+function deriveResumeState(entries, contract, options = {}) {
+    const matchingStart = findLatestRunStarted(entries, contract.manifest.contractHash);
+    if (!matchingStart) {
+        const seenHashes = new Set();
+        for (const e of entries) {
+            if (e.type === 'run-started')
+                seenHashes.add(e.contractHash);
+        }
+        throw new ResumeError(`no run-started entry matches contract hash ${contract.manifest.contractHash}; ledger contains ${[...seenHashes].join(', ') || '(none)'}`, 'no-run-started', 'Try: ensure you are resuming with the same contract used in the original run, or start a new run instead');
+    }
+    if (contract.obligations.length === 0) {
+        throw new ResumeError('contract has no obligations to resume against', 'no-obligations', 'Try: provide a contract with at least one obligation, or start a fresh run');
+    }
+    const satisfied = (0, memoization_1.priorSatisfiedIndexes)(entries, contract.manifest.contractHash, options);
+    const failed = (0, memoization_1.priorFailedIndexes)(entries, contract.manifest.contractHash, options);
+    const pending = new Set();
+    for (let i = 0; i < contract.obligations.length; i += 1) {
+        if (!satisfied.has(i))
+            pending.add(i);
+    }
+    return {
+        resumeOf: matchingStart.runId,
+        contractId: matchingStart.contractId,
+        contractHash: matchingStart.contractHash,
+        satisfiedIndexes: satisfied,
+        failedIndexes: failed,
+        pendingIndexes: pending,
+        originalObligationCount: matchingStart.obligationCount,
+    };
+}
+/**
+ * Find the most recent `run-started` entry whose `contractHash` matches.
+ * Multiple matching starts can occur (a contract has been resumed many
+ * times); the last one wins.
+ */
+function findLatestRunStarted(entries, contractHash) {
+    for (let i = entries.length - 1; i >= 0; i -= 1) {
+        const e = entries[i];
+        if (!e)
+            continue;
+        if (e.type === 'run-started' && e.contractHash === contractHash) {
+            return e;
+        }
+    }
+    return null;
+}
+/**
+ * Walk the contract's obligation list and return the entries the caller
+ * should write as `obligation-memoized` ledger entries on resume — one
+ * per index in `state.satisfiedIndexes`. The returned shape is a
+ * partial entry minus the header (the ledger stamps those).
+ */
+function memoizedEntriesForResume(state, contract) {
+    const out = [];
+    for (const idx of state.satisfiedIndexes) {
+        const o = contract.obligations[idx];
+        if (!o)
+            continue;
+        out.push({
+            type: 'obligation-memoized',
+            obligationIndex: idx,
+            obligationType: o.type,
+            obligationKey: keyForObligation(o),
+            source: 'prior-run',
+            responseSha256: null,
+            detail: `obligation index ${idx} satisfied by prior run ${state.resumeOf}; skipping synthesis`,
+        });
+    }
+    return out;
+}
+function keyForObligation(o) {
+    // Delegate to memoization.obligationKey to avoid drift between the two
+    // call sites; both paths land in the same key shape.
+    return (0, memoization_1.obligationKey)(o);
+}

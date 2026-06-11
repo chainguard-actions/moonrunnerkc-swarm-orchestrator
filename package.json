@@ -1,0 +1,96 @@
+{
+  "name": "swarm-orchestrator",
+  "version": "10.0.0",
+  "description": "The merge gate for AI-generated PRs. Detects when AI coding agents cheat — test relaxation, mock-of-hallucination, assertion strip, no-op fix — and gates merges on cheat-free PRs. Emits CycloneDX-ML and SPDX 3.0 AI-Profile artifacts for procurement and EU AI Act Annex IV documentation.",
+  "main": "dist/src/index.js",
+  "bin": {
+    "swarm": "dist/src/cli.js",
+    "swarm-audit": "dist/src/cli.js",
+    "swarm-orchestrator": "dist/src/cli.js"
+  },
+  "files": [
+    "dist/src/",
+    "config/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-non-ts-assets.js && node -e \"require('fs').chmodSync('dist/src/cli.js', 0o755)\"",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "prebuild": "npm run clean",
+    "prepublishOnly": "npm run build && npm test",
+    "test": "npm run build && mocha --recursive 'dist/test/**/*.test.js'",
+    "test:ci": "mocha --recursive 'dist/test/**/*.test.js'",
+    "lint": "eslint 'src/**/*.{ts,tsx}' 'test/**/*.ts'",
+    "lint:fix": "eslint --fix 'src/**/*.{ts,tsx}' 'test/**/*.ts'",
+    "typecheck": "tsc --noEmit -p tsconfig.build.json",
+    "format": "prettier --write 'src/**/*.{ts,tsx}' 'test/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.{ts,tsx}' 'test/**/*.ts'",
+    "start": "node dist/src/cli.js",
+    "corpus:generate": "tsc -p tsconfig.build.json && node dist/scripts/corpus/generate-v10.js",
+    "leaderboard": "tsc -p tsconfig.build.json && node dist/benchmarks/leaderboard/score.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moonrunnerkc/swarm-orchestrator.git"
+  },
+  "keywords": [
+    "code-review",
+    "pr-audit",
+    "ai-code-gate",
+    "cheat-detector",
+    "aibom",
+    "ai-bom",
+    "cyclonedx-ml",
+    "spdx-ai",
+    "merge-gate",
+    "github-action",
+    "eu-ai-act",
+    "cisa-sbom",
+    "claude-code",
+    "cursor",
+    "devin",
+    "aider",
+    "codex",
+    "copilot",
+    "openhands",
+    "attestation",
+    "verification",
+    "swarm"
+  ],
+  "author": "Bradley R. Kinnard",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/moonrunnerkc/swarm-orchestrator/issues"
+  },
+  "homepage": "https://github.com/moonrunnerkc/swarm-orchestrator#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/js-yaml": "^4.0.9",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^25.0.10",
+    "eslint": "^10.4.0",
+    "madge": "^8.0.0",
+    "mocha": "^11.7.5",
+    "msw": "^2.14.6",
+    "prettier": "^3.8.3",
+    "tsx": "^4.22.1",
+    "typescript-eslint": "^8.59.3"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.95.1",
+    "@octokit/rest": "^20",
+    "ajv": "^8.20.0",
+    "js-yaml": "^4.1.1",
+    "parse-diff": "^0.12.0",
+    "typescript": "^5.9.3"
+  },
+  "_whyRuntimeTypeScript": "The TypeScript compiler API is required at runtime by src/verification/ast-signature.ts, src/verification/ast-imports.ts, and src/falsification/inspection/heuristic-classifier.ts for AST parsing of function-must-have-signature and import-graph-must-satisfy obligations. It cannot be moved to devDependencies without breaking these obligation types.",
+  "overrides": {
+    "serialize-javascript": "^7.0.5"
+  }
+}

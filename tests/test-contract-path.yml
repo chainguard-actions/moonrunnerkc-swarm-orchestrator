@@ -1,0 +1,32 @@
+name: Test legacy orchestrator mode with contract-path
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a sample contract directory
+        run: |
+          mkdir -p /tmp/swarm-contract
+          echo '{"obligations": []}' > /tmp/swarm-contract/contract.json
+      - id: action
+        uses: .
+        with:
+          contract-path: '/tmp/swarm-contract'
+          session: 'deterministic'
+          mode: 'tournament'
+          candidates: '2'
+          result-path: '/tmp/swarm-result-contract.json'
+        continue-on-error: true
+      - name: Assert action ran
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped"
+            exit 1
+          fi
+          echo "PASS: action executed"

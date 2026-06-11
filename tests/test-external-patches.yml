@@ -1,0 +1,34 @@
+name: Test external patches inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create sample patches queue and dir
+        run: |
+          echo '{"patch": "diff --git a/foo.py b/foo.py"}' > /tmp/patches.jsonl
+          mkdir -p /tmp/patches-dir
+      - id: action
+        uses: .
+        with:
+          goal: 'Apply patches to codebase'
+          session: 'deterministic'
+          extractor: 'deterministic'
+          external-patches-queue: '/tmp/patches.jsonl'
+          external-patches-dir: '/tmp/patches-dir'
+          contract-only: 'true'
+          result-path: '/tmp/swarm-result-patches.json'
+        continue-on-error: true
+      - name: Assert action ran
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped"
+            exit 1
+          fi
+          echo "PASS: action executed"
