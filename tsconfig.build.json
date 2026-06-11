@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist"
+  },
+  "include": [
+    "src/**/*",
+    "test/**/*",
+    "benchmarks/falsification-corpus/**/*",
+    "scripts/v8-bench/**/*",
+    "scripts/phase1-dev-gate/**/*",
+    "scripts/phase2/**/*",
+    "scripts/phase3/**/*",
+    "scripts/phase4/**/*",
+    "scripts/phase4-redo/**/*",
+    "scripts/inspection/**/*"
+  ],
+  "exclude": ["node_modules", "dist", "test/fixtures"]
+}

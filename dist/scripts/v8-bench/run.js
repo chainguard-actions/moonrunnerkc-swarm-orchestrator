@@ -1,0 +1,176 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+/* eslint-disable no-console */
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
+const goals_1 = require("./goals");
+const run_goal_1 = require("./run-goal");
+const aggregate_1 = require("./aggregate");
+function parseFlags(argv) {
+    const flags = {
+        outDir: path.resolve('docs'),
+        jsonl: path.resolve('docs/benchmarks/v8-history.jsonl'),
+        refuseOnFloorMiss: true,
+    };
+    for (let i = 0; i < argv.length; i += 1) {
+        const a = argv[i] ?? '';
+        if (a === '--out-dir') {
+            flags.outDir = path.resolve(argv[++i] ?? '');
+        }
+        else if (a === '--jsonl') {
+            flags.jsonl = path.resolve(argv[++i] ?? '');
+        }
+        else if (a === '--no-refuse') {
+            flags.refuseOnFloorMiss = false;
+        }
+        else if (a === '--help' || a === '-h') {
+            printHelp();
+            process.exit(0);
+        }
+        else {
+            throw new Error(`unknown flag: ${a}`);
+        }
+    }
+    return flags;
+}
+function printHelp() {
+    process.stderr.write([
+        'usage: node dist/scripts/v8-bench/run.js [flags]',
+        '',
+        'flags:',
+        '  --out-dir <dir>   where to write the markdown report (default ./docs)',
+        '  --jsonl <path>    where to append the JSONL history (default docs/benchmarks/v8-history.jsonl)',
+        '  --no-refuse       do not exit non-zero when the 30% floor or pass-rate gate is missed',
+        '  --help, -h        show this message',
+        '',
+    ].join('\n'));
+}
+async function main() {
+    const flags = parseFlags(process.argv.slice(2));
+    (0, goals_1.assertSuiteShape)();
+    const results = [];
+    for (const goal of goals_1.BENCH_GOALS) {
+        const r = await (0, run_goal_1.runBenchGoal)(goal);
+        results.push(r);
+        process.stderr.write(`[bench] ${goal.id} (${goal.size}, ${goal.obligations.length} oblig): satisfied=${r.satisfied}/${r.obligationCount} v8eff=${r.v8EffectiveInput.toFixed(0)} v6eff=${r.v6EffectiveInput.toFixed(0)} reduction=${(r.inputReductionPct * 100).toFixed(1)}%\n`);
+    }
+    const summary = (0, aggregate_1.summarize)(results);
+    const mdBody = (0, aggregate_1.renderMarkdown)(results, summary);
+    const reportPath = path.join(flags.outDir, 'v8-phase-2-benchmark.md');
+    fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+    fs.writeFileSync(reportPath, renderReport(mdBody, summary), 'utf8');
+    fs.mkdirSync(path.dirname(flags.jsonl), { recursive: true });
+    const ts = new Date().toISOString();
+    for (const r of results) {
+        fs.appendFileSync(flags.jsonl, JSON.stringify({ ts, ...r }) + '\n', 'utf8');
+    }
+    fs.appendFileSync(flags.jsonl, JSON.stringify({ ts, summary }) + '\n', 'utf8');
+    process.stderr.write(`\n[bench] report:  ${reportPath}\n`);
+    process.stderr.write(`[bench] history: ${flags.jsonl}\n`);
+    process.stderr.write(`[bench] reduction=${(summary.totalInputReductionPct * 100).toFixed(2)}% (floor 30%): ${summary.meets30PctFloor ? 'PASS' : 'FAIL'}\n`);
+    process.stderr.write(`[bench] pass-rate-delta=${(summary.passRateDelta * 100).toFixed(2)} pp (within 5%): ${summary.passRateWithin5Pct ? 'PASS' : 'FAIL'}\n`);
+    if (flags.refuseOnFloorMiss && (!summary.meets30PctFloor || !summary.passRateWithin5Pct)) {
+        process.exit(1);
+    }
+}
+function renderReport(body, summary) {
+    return [
+        '# Phase 2 Cost Benchmark',
+        '',
+        'Generated by `node dist/scripts/v8-bench/run.js`. Per impl guide §5,',
+        'this benchmark refuses to ship Phase 2 unless the v8 effective input',
+        'is at least 30% lower than v6, holding pass rate within 5%.',
+        '',
+        '## Methodology',
+        '',
+        'Synthetic-mode benchmark, deterministic. The v8 path runs the real',
+        'population manager (src/population/manager.ts) against a fresh',
+        'tmpdir fixture using `StubSession`. Token counts use Anthropic\'s',
+        'published cache pricing multipliers (cache-read 0.1×, cache-write',
+        '1.25×) applied to estimated tokens (4 chars/token rule of thumb,',
+        'used identically on both v6 and v8 sides). The v6 path is the cost',
+        'model from `scripts/v8-bench/v6-model.ts`: each obligation re-pays a',
+        '40K bootstrap (overhaul guide §6) plus 0.9 retry cycles in',
+        'expectation (VeriMAP retry economics, overhaul guide §4.2).',
+        '',
+        'Effective input tokens normalize the cache-modulated cost back to',
+        'standard-input-rate equivalents:',
+        '',
+        '    eff = std_input + cache_read × 0.1 + cache_write × 1.25',
+        '',
+        'Pass rate is the v8 manager\'s actual satisfied-obligation count over',
+        'total. v6 pass rate is the synthetic-model assumption (1.0).',
+        '',
+        '## Per-goal results',
+        '',
+        body,
+        '',
+        '## Reproducibility',
+        '',
+        '    npm run build',
+        '    node dist/scripts/v8-bench/run.js',
+        '',
+        'Re-running on the same source tree yields identical numbers because',
+        'both sides are deterministic. The JSONL history at',
+        '`docs/benchmarks/v8-history.jsonl` accumulates one row per goal per',
+        'run plus a summary row.',
+        '',
+        '## Phase 2 §5 verdict',
+        '',
+        `- Effective-input reduction: **${(summary.totalInputReductionPct * 100).toFixed(2)}%** ⇒ ${summary.meets30PctFloor ? 'meets' : 'misses'} 30% floor.`,
+        `- Pass-rate delta (v8 − v6): **${(summary.passRateDelta * 100).toFixed(2)} pp** ⇒ ${summary.passRateWithin5Pct ? 'within' : 'outside'} 5% window.`,
+        `- Mean v8 cache hit rate: **${(summary.meanCacheHitRate * 100).toFixed(2)}%** (measurable).`,
+        '',
+        '## Caveats',
+        '',
+        '- Synthetic-mode tokens are estimated, not provider-reported. The',
+        '  same 4-chars-per-token estimator runs on both sides, so the cost',
+        '  ratio is fair even when absolute counts diverge from real-API',
+        '  counts.',
+        '- v6 is modeled, not executed. The model\'s assumptions trace to the',
+        '  overhaul guide\'s structural numbers and are conservative.',
+        '- A real-API benchmark (`AnthropicSession` against the same suite)',
+        '  is the natural follow-up; it will replace estimated tokens with',
+        '  provider-reported tokens and replace the v6 model with measured',
+        '  v6 runs against the existing CLI adapter pipeline. That work is',
+        '  Phase 2 §16 follow-up scope, not Phase 2 §5 ship-gate scope.',
+        '',
+    ].join('\n');
+}
+main().catch((err) => {
+    process.stderr.write(`[bench] fatal: ${err.stack ?? err.message}\n`);
+    process.exit(2);
+});

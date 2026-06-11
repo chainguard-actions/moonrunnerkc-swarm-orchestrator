@@ -1,0 +1,48 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+
+# Development files
+.git
+.github
+.env
+.env.*
+!.env.example
+
+# Documentation and non-runtime files
+docs
+examples
+*.md
+LICENSE
+SECURITY.md
+
+# Test artifacts
+test
+coverage
+test-output.txt
+
+# Python artifacts
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.coverage
+coverage_html
+coverage.json
+*.egg-info
+
+# IDE and OS files
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# CI/CD
+runs
+
+# Other subprojects not shipped in this image
+benchmarks

@@ -1,0 +1,22 @@
+name: 'Falsifying Swarm Orchestrator'
+description: 'Contract-first AI coding swarm. Compiles a goal into typed obligations, races persona candidates per obligation, verifies before commit.'
+branding:
+  icon: 'cpu'
+  color: 'blue'
+
+inputs:
+  goal:
+    description: 'Natural-language goal. Compiled into a contract, then either executed or returned (see contract-only).'
+    required: true
+  contract-only:
+    description: 'When true, compile the goal into a contract and stop without executing it. Output: the contract directory under .swarm/contracts/.'
+    required: false
+    default: 'false'
+
+outputs:
+  result:
+    description: 'JSON summary of the run (obligations satisfied, tokens, wall time)'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
