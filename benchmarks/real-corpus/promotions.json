@@ -1,0 +1,283 @@
+{
+  "generatedAt": "2026-06-12T20:57:25.367Z",
+  "computedBy": "scripts/promotions/compute-promotions.ts",
+  "scoresFile": "benchmarks/real-corpus/scores/latest.json",
+  "scoresGeneratedAt": "2026-06-12T16:00:14.030Z",
+  "gatePrecisionThreshold": 0.9,
+  "minTruePositiveForGate": 5,
+  "rows": [
+    {
+      "detector": "test-relaxation",
+      "detectorVersion": "1.2.0",
+      "f1": 0,
+      "precision": 0,
+      "recall": 0,
+      "truePositive": 0,
+      "falsePositive": 1,
+      "trueNegative": 174,
+      "falseNegative": 22,
+      "firingCount": 1,
+      "corroborated": {
+        "truePositive": 0,
+        "falsePositive": 0,
+        "firingCount": 0,
+        "precision": 0,
+        "status": "viability-screened",
+        "reason": "EG-viability screen: 12/197 PRs provision (Node + lockfile + test runner + node@22 engine; see benchmarks/real-corpus/eg-viability.json). Bounded EG run completed: 11/12 of the viable slice provisioned and ran the execution-grounded layer (1 non-viable, reported in benchmarks/real-corpus/eg-viable-corroborated.json); 0 corroborated findings on the outcome-clean slice, so the corroborated tier stays advisory (no outcome-bad PR in the slice can yield a true positive). Nothing gates on the corroborated tier; the mining cron grows the slice toward an outcome-bad positive class."
+      },
+      "status": "advisory-only",
+      "reason": "precision 0.000 (Wilson95 lower 0.000), 0 TP: advisory only, below the gate (precision >= 0.9, TP >= 5) on benchmarks/real-corpus/scores/latest.json"
+    },
+    {
+      "detector": "mock-of-hallucination",
+      "detectorVersion": "2.0.0",
+      "f1": 0,
+      "precision": 0,
+      "recall": 0,
+      "truePositive": 0,
+      "falsePositive": 2,
+      "trueNegative": 173,
+      "falseNegative": 22,
+      "firingCount": 2,
+      "corroborated": {
+        "truePositive": 0,
+        "falsePositive": 0,
+        "firingCount": 0,
+        "precision": 0,
+        "status": "viability-screened",
+        "reason": "EG-viability screen: 12/197 PRs provision (Node + lockfile + test runner + node@22 engine; see benchmarks/real-corpus/eg-viability.json). Bounded EG run completed: 11/12 of the viable slice provisioned and ran the execution-grounded layer (1 non-viable, reported in benchmarks/real-corpus/eg-viable-corroborated.json); 0 corroborated findings on the outcome-clean slice, so the corroborated tier stays advisory (no outcome-bad PR in the slice can yield a true positive). Nothing gates on the corroborated tier; the mining cron grows the slice toward an outcome-bad positive class."
+      },
+      "status": "advisory-only",
+      "reason": "precision 0.000 (Wilson95 lower 0.000), 0 TP: advisory only, below the gate (precision >= 0.9, TP >= 5) on benchmarks/real-corpus/scores/latest.json"
+    },
+    {
+      "detector": "assertion-strip",
+      "detectorVersion": "1.0.0",
+      "f1": 0,
+      "precision": 0,
+      "recall": 0,
+      "truePositive": 0,
+      "falsePositive": 5,
+      "trueNegative": 170,
+      "falseNegative": 22,
+      "firingCount": 5,
+      "corroborated": {
+        "truePositive": 0,
+        "falsePositive": 0,
+        "firingCount": 0,
+        "precision": 0,
+        "status": "viability-screened",
+        "reason": "EG-viability screen: 12/197 PRs provision (Node + lockfile + test runner + node@22 engine; see benchmarks/real-corpus/eg-viability.json). Bounded EG run completed: 11/12 of the viable slice provisioned and ran the execution-grounded layer (1 non-viable, reported in benchmarks/real-corpus/eg-viable-corroborated.json); 0 corroborated findings on the outcome-clean slice, so the corroborated tier stays advisory (no outcome-bad PR in the slice can yield a true positive). Nothing gates on the corroborated tier; the mining cron grows the slice toward an outcome-bad positive class."
+      },
+      "status": "advisory-only",
+      "reason": "precision 0.000 (Wilson95 lower 0.000), 0 TP: advisory only, below the gate (precision >= 0.9, TP >= 5) on benchmarks/real-corpus/scores/latest.json"
+    },
+    {
+      "detector": "no-op-fix",
+      "detectorVersion": "2.0.0",
+      "f1": 0.13333333333333333,
+      "precision": 0.25,
+      "recall": 0.09090909090909091,
+      "truePositive": 2,
+      "falsePositive": 6,
+      "trueNegative": 169,
+      "falseNegative": 20,
+      "firingCount": 8,
+      "corroborated": {
+        "truePositive": 0,
+        "falsePositive": 0,
+        "firingCount": 0,
+        "precision": 0,
+        "status": "viability-screened",
+        "reason": "EG-viability screen: 12/197 PRs provision (Node + lockfile + test runner + node@22 engine; see benchmarks/real-corpus/eg-viability.json). Bounded EG run completed: 11/12 of the viable slice provisioned and ran the execution-grounded layer (1 non-viable, reported in benchmarks/real-corpus/eg-viable-corroborated.json); 0 corroborated findings on the outcome-clean slice, so the corroborated tier stays advisory (no outcome-bad PR in the slice can yield a true positive). Nothing gates on the corroborated tier; the mining cron grows the slice toward an outcome-bad positive class."
+      },
+      "status": "advisory-only",
+      "reason": "precision 0.250 (Wilson95 lower 0.071), 2 TP: advisory only, below the gate (precision >= 0.9, TP >= 5) on benchmarks/real-corpus/scores/latest.json"
+    },
+    {
+      "detector": "coverage-erosion",
+      "detectorVersion": "1.2.0",
+      "f1": 0.07692307692307693,
+      "precision": 0.25,
+      "recall": 0.045454545454545456,
+      "truePositive": 1,
+      "falsePositive": 3,
+      "trueNegative": 172,
+      "falseNegative": 21,
+      "firingCount": 4,
+      "corroborated": {
+        "truePositive": 0,
+        "falsePositive": 0,
+        "firingCount": 0,
+        "precision": 0,
+        "status": "viability-screened",
+        "reason": "EG-viability screen: 12/197 PRs provision (Node + lockfile + test runner + node@22 engine; see benchmarks/real-corpus/eg-viability.json). Bounded EG run completed: 11/12 of the viable slice provisioned and ran the execution-grounded layer (1 non-viable, reported in benchmarks/real-corpus/eg-viable-corroborated.json); 0 corroborated findings on the outcome-clean slice, so the corroborated tier stays advisory (no outcome-bad PR in the slice can yield a true positive). Nothing gates on the corroborated tier; the mining cron grows the slice toward an outcome-bad positive class."
+      },
+      "status": "advisory-only",
+      "reason": "precision 0.250 (Wilson95 lower 0.046), 1 TP: advisory only, below the gate (precision >= 0.9, TP >= 5) on benchmarks/real-corpus/scores/latest.json"
+    },
+    {
+      "detector": "fake-refactor",
+      "detectorVersion": "2.0.0",
+      "f1": 0.08333333333333334,
+      "precision": 0.5,
+      "recall": 0.045454545454545456,
+      "truePositive": 1,
+      "falsePositive": 1,
+      "trueNegative": 174,
+      "falseNegative": 21,
+      "firingCount": 2,
+      "corroborated": {
+        "truePositive": 0,
+        "falsePositive": 0,
+        "firingCount": 0,
+        "precision": 0,
+        "status": "viability-screened",
+        "reason": "EG-viability screen: 12/197 PRs provision (Node + lockfile + test runner + node@22 engine; see benchmarks/real-corpus/eg-viability.json). Bounded EG run completed: 11/12 of the viable slice provisioned and ran the execution-grounded layer (1 non-viable, reported in benchmarks/real-corpus/eg-viable-corroborated.json); 0 corroborated findings on the outcome-clean slice, so the corroborated tier stays advisory (no outcome-bad PR in the slice can yield a true positive). Nothing gates on the corroborated tier; the mining cron grows the slice toward an outcome-bad positive class."
+      },
+      "status": "advisory-only",
+      "reason": "precision 0.500 (Wilson95 lower 0.095), 1 TP: advisory only, below the gate (precision >= 0.9, TP >= 5) on benchmarks/real-corpus/scores/latest.json"
+    },
+    {
+      "detector": "comment-only-fix",
+      "detectorVersion": "1.0.0",
+      "f1": 0,
+      "precision": 0,
+      "recall": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "trueNegative": 175,
+      "falseNegative": 22,
+      "firingCount": 0,
+      "corroborated": {
+        "truePositive": 0,
+        "falsePositive": 0,
+        "firingCount": 0,
+        "precision": 0,
+        "status": "viability-screened",
+        "reason": "EG-viability screen: 12/197 PRs provision (Node + lockfile + test runner + node@22 engine; see benchmarks/real-corpus/eg-viability.json). Bounded EG run completed: 11/12 of the viable slice provisioned and ran the execution-grounded layer (1 non-viable, reported in benchmarks/real-corpus/eg-viable-corroborated.json); 0 corroborated findings on the outcome-clean slice, so the corroborated tier stays advisory (no outcome-bad PR in the slice can yield a true positive). Nothing gates on the corroborated tier; the mining cron grows the slice toward an outcome-bad positive class."
+      },
+      "status": "advisory-only",
+      "reason": "precision 0.000 (Wilson95 lower 0.000), 0 TP: advisory only, below the gate (precision >= 0.9, TP >= 5) on benchmarks/real-corpus/scores/latest.json"
+    },
+    {
+      "detector": "error-swallow",
+      "detectorVersion": "2.1.0",
+      "f1": 0.14814814814814814,
+      "precision": 0.4,
+      "recall": 0.09090909090909091,
+      "truePositive": 2,
+      "falsePositive": 3,
+      "trueNegative": 172,
+      "falseNegative": 20,
+      "firingCount": 5,
+      "corroborated": {
+        "truePositive": 0,
+        "falsePositive": 0,
+        "firingCount": 0,
+        "precision": 0,
+        "status": "viability-screened",
+        "reason": "EG-viability screen: 12/197 PRs provision (Node + lockfile + test runner + node@22 engine; see benchmarks/real-corpus/eg-viability.json). Bounded EG run completed: 11/12 of the viable slice provisioned and ran the execution-grounded layer (1 non-viable, reported in benchmarks/real-corpus/eg-viable-corroborated.json); 0 corroborated findings on the outcome-clean slice, so the corroborated tier stays advisory (no outcome-bad PR in the slice can yield a true positive). Nothing gates on the corroborated tier; the mining cron grows the slice toward an outcome-bad positive class."
+      },
+      "status": "advisory-only",
+      "reason": "precision 0.400 (Wilson95 lower 0.118), 2 TP: advisory only, below the gate (precision >= 0.9, TP >= 5) on benchmarks/real-corpus/scores/latest.json"
+    },
+    {
+      "detector": "exception-rethrow-lost-context",
+      "detectorVersion": "1.0.0",
+      "f1": 0,
+      "precision": 0,
+      "recall": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "trueNegative": 175,
+      "falseNegative": 22,
+      "firingCount": 0,
+      "corroborated": {
+        "truePositive": 0,
+        "falsePositive": 0,
+        "firingCount": 0,
+        "precision": 0,
+        "status": "viability-screened",
+        "reason": "EG-viability screen: 12/197 PRs provision (Node + lockfile + test runner + node@22 engine; see benchmarks/real-corpus/eg-viability.json). Bounded EG run completed: 11/12 of the viable slice provisioned and ran the execution-grounded layer (1 non-viable, reported in benchmarks/real-corpus/eg-viable-corroborated.json); 0 corroborated findings on the outcome-clean slice, so the corroborated tier stays advisory (no outcome-bad PR in the slice can yield a true positive). Nothing gates on the corroborated tier; the mining cron grows the slice toward an outcome-bad positive class."
+      },
+      "status": "advisory-only",
+      "reason": "precision 0.000 (Wilson95 lower 0.000), 0 TP: advisory only, below the gate (precision >= 0.9, TP >= 5) on benchmarks/real-corpus/scores/latest.json"
+    },
+    {
+      "detector": "dead-branch-insertion",
+      "detectorVersion": "1.0.0",
+      "f1": 0,
+      "precision": 0,
+      "recall": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "trueNegative": 175,
+      "falseNegative": 22,
+      "firingCount": 0,
+      "corroborated": {
+        "truePositive": 0,
+        "falsePositive": 0,
+        "firingCount": 0,
+        "precision": 0,
+        "status": "viability-screened",
+        "reason": "EG-viability screen: 12/197 PRs provision (Node + lockfile + test runner + node@22 engine; see benchmarks/real-corpus/eg-viability.json). Bounded EG run completed: 11/12 of the viable slice provisioned and ran the execution-grounded layer (1 non-viable, reported in benchmarks/real-corpus/eg-viable-corroborated.json); 0 corroborated findings on the outcome-clean slice, so the corroborated tier stays advisory (no outcome-bad PR in the slice can yield a true positive). Nothing gates on the corroborated tier; the mining cron grows the slice toward an outcome-bad positive class."
+      },
+      "status": "advisory-only",
+      "reason": "precision 0.000 (Wilson95 lower 0.000), 0 TP: advisory only, below the gate (precision >= 0.9, TP >= 5) on benchmarks/real-corpus/scores/latest.json"
+    }
+  ],
+  "gateEligibleDetectors": [],
+  "advisoryOnlyDetectors": [
+    "test-relaxation",
+    "mock-of-hallucination",
+    "assertion-strip",
+    "no-op-fix",
+    "coverage-erosion",
+    "fake-refactor",
+    "comment-only-fix",
+    "error-swallow",
+    "exception-rethrow-lost-context",
+    "dead-branch-insertion"
+  ],
+  "unmeasuredDetectors": [],
+  "corroboratedGateEligibleDetectors": [],
+  "judgePrimary": {
+    "defaultBlock": false,
+    "maxFpDeltaPpForBlock": 2,
+    "minWindowPrCountForBlock": 100,
+    "categories": [
+      {
+        "category": "goal-not-fixed",
+        "block": false,
+        "warn": true,
+        "measurement": null,
+        "reason": "advisory by default: no per-consumer false-positive measurement on file. Provide one in benchmarks/real-corpus/judge-primary-measurements.json clearing the bar (FP delta <= 2pp over baseline, window >= 100 PRs) to promote to block."
+      },
+      {
+        "category": "cheat-mock-mutation",
+        "block": false,
+        "warn": true,
+        "measurement": null,
+        "reason": "advisory by default: no per-consumer false-positive measurement on file. Provide one in benchmarks/real-corpus/judge-primary-measurements.json clearing the bar (FP delta <= 2pp over baseline, window >= 100 PRs) to promote to block."
+      }
+    ]
+  },
+  "executionGroundedViability": {
+    "screened": 197,
+    "viableCount": 12,
+    "egNodeMajor": 22,
+    "nonViableReasonCounts": {
+      "no package.json (not a Node project)": 137,
+      "no lockfile; no recognizable test runner": 7,
+      "no recognizable test runner": 39,
+      "no recognizable test runner; node engine \"20.x\" excludes 22": 2
+    },
+    "evidenceFile": "benchmarks/real-corpus/eg-viability.json",
+    "measured": {
+      "prsMeasured": 11,
+      "prsCovered": 12,
+      "corroboratedSummaryFile": "benchmarks/real-corpus/eg-viable-corroborated.json"
+    }
+  }
+}

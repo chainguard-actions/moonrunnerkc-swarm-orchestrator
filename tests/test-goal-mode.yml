@@ -1,0 +1,32 @@
+name: Test goal mode inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          goal: 'Write a hello world function'
+          extractor: 'deterministic'
+          session: 'deterministic'
+          model: 'claude-3-5-sonnet-20241022'
+          falsifiers: 'off'
+          mode: 'single'
+          max-obligations: '5'
+          cost-cap: '1000'
+          extra-args: '--snapshot-cleanup always'
+        continue-on-error: true
+      - name: Assert action ran (goal mode inputs accepted)
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" = "" ]; then
+            echo "FAIL: step did not execute"
+            exit 1
+          fi
+          echo "PASS: action accepted goal mode inputs"

@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "frontend/src/main.tsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/detvildevestendk-code/shiny-spork/pull/6",
+  "prTitle": "Scaffold and harden AI futures trading bot",
+  "sha256": "50620f6095dac07e2b6c9551128238ce02ff7f2150aa217f3115cf19d6785c9b"
+}

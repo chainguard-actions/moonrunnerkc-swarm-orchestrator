@@ -1,0 +1,17 @@
+{
+  "generatedAt": "2026-06-12T21:09:33.926Z",
+  "computedBy": "scripts/real-prs/mine-backward.ts",
+  "method": "backward: revert markers -> reverted agent commit -> findOutcomeEvidence confirmation",
+  "lastRun": {
+    "apiCalls": 1500,
+    "revertCommitsScanned": 110,
+    "stoppedReason": "api-budget",
+    "freshEntries": 0
+  },
+  "total": 0,
+  "distribution": {
+    "reverted": 0,
+    "hotfixed": 0
+  },
+  "entries": []
+}

@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "src/components/BudgetCommandCenter.jsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/Freedomfarms/Forward-Freedom-Main/pull/23",
+  "prTitle": "Budget Strategy Lab: remove Regular categories, align column headers",
+  "sha256": "b22bcda57ebfc7130ac241172dc7f3c7b09ed8ca154056b82fc3cfeec496c191"
+}

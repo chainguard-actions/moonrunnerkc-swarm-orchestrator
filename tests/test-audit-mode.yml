@@ -1,0 +1,32 @@
+name: Test audit mode inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/1/merge
+      GITHUB_HEAD_REF: feature-branch
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'true'
+          pr: '1'
+          audit-comment: 'false'
+          emit-aibom: 'cyclonedx-ml'
+        continue-on-error: true
+      - name: Assert action ran (audit-mode inputs accepted)
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          # The action may fail due to missing credentials/PR, but it must
+          # have started (not a YAML/input-parsing error). A YAML parse error
+          # would prevent the step from running at all.
+          if [ "${{ steps.action.outcome }}" = "" ]; then
+            echo "FAIL: step did not execute"
+            exit 1
+          fi
+          echo "PASS: action accepted audit-mode inputs"

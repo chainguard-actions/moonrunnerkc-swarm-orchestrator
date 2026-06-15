@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "src/components/AccountsView.jsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/Freedomfarms/Forward-Freedom-Main/pull/22",
+  "prTitle": "Accounts: edit/remove in Connection hub only (clean cards)",
+  "sha256": "d6cde15ff23304f652ab53095c42575e8d265b94b9afede64b92bbc28d1a42b2"
+}

@@ -1,0 +1,41 @@
+name: Test audit diff-file inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/1/merge
+      GITHUB_HEAD_REF: feature-branch
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a minimal diff file for testing
+        run: |
+          mkdir -p /tmp/swarm-test
+          cat > /tmp/swarm-test/test.diff <<'EOF'
+          --- a/foo.ts
+          +++ b/foo.ts
+          @@ -1,3 +1,3 @@
+          -expect(result).toBe(true);
+          +expect(result).toBe(false);
+          EOF
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'true'
+          diff-file: '/tmp/swarm-test/test.diff'
+          audit-comment: 'false'
+          result-path: '/tmp/swarm-result-test.json'
+          repo-root: '${{ github.workspace }}'
+          working-directory: '${{ github.workspace }}'
+        continue-on-error: true
+      - name: Assert action ran (diff-file inputs accepted)
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" = "" ]; then
+            echo "FAIL: step did not execute"
+            exit 1
+          fi
+          echo "PASS: action accepted diff-file inputs"

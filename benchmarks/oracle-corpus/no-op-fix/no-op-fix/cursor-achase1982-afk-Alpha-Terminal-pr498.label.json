@@ -1,0 +1,11 @@
+{
+  "category": "no-op-fix",
+  "injectorId": "no-op-fix",
+  "file": "lib/movers-types/src/index.ts",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 3,
+  "sourcePrUrl": "https://github.com/achase1982-afk/Alpha-Terminal/pull/498",
+  "prTitle": "fix(movers): UNKNOWN catalyst fallback, remove collapsed posture",
+  "sha256": "02c5006d00310572a1f6ffab66c67d248f39b548a2b6733e747ca7836ec2fdd2"
+}

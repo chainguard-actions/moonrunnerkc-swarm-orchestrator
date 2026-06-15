@@ -1,0 +1,11 @@
+{
+  "category": "no-op-fix",
+  "injectorId": "no-op-fix",
+  "file": "{{cookiecutter.project_slug}}/.git-hooks/pre_commit/punchlist.rb",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 3,
+  "sourcePrUrl": "https://github.com/apiology/cookiecutter-rails/pull/151",
+  "prTitle": "Update Solargraph to 0.59.2",
+  "sha256": "914a194cf9c3e819e4147f9ff5dacf6a365c6317604ffbeb1d5fcdbf523999f9"
+}

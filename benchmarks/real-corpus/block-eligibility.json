@@ -1,0 +1,134 @@
+{
+  "generatedAt": "2026-06-12T21:29:46.804Z",
+  "computedBy": "scripts/gate/compute-block-eligibility.ts",
+  "calibrationFile": "benchmarks/real-corpus/trigger-calibration.json",
+  "calibrationGeneratedAt": "2026-06-12T21:29:46.761Z",
+  "wilsonLowerThreshold": 0.9,
+  "minConfirmedRevertedForBlock": 5,
+  "rows": [
+    {
+      "trigger": "claim-falsified",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": [],
+      "tier": "self-certifying",
+      "blockEligible": true,
+      "reason": "block-eligible (self-certifying): blocks only when a firing's controls are all green at audit time; 0 calibration firing(s), 0 clean firings."
+    },
+    {
+      "trigger": "corroborated-under-constraint",
+      "firingCount": 4,
+      "truePositive": 4,
+      "falsePositive": 0,
+      "precision": 1,
+      "wilsonLowerBound": 0.5100999795960008,
+      "truePositivePrs": [
+        "expo/expo#35036",
+        "expo/expo#38074",
+        "expo/expo#39603",
+        "tldraw/tldraw#7880"
+      ],
+      "tier": "circumstantial",
+      "blockEligible": false,
+      "reason": "not block-eligible: Wilson95 lower 0.510 (need >= 0.9), 4 confirmed reverted TP (need >= 5) over 4 firing(s) on benchmarks/real-corpus/trigger-calibration.json."
+    },
+    {
+      "trigger": "obligation-failure",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": [],
+      "tier": "self-certifying",
+      "blockEligible": true,
+      "reason": "block-eligible (self-certifying): blocks only when a firing's controls are all green at audit time; 0 calibration firing(s), 0 clean firings."
+    },
+    {
+      "trigger": "test-tamper-proven",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": [],
+      "tier": "self-certifying",
+      "blockEligible": true,
+      "reason": "block-eligible (self-certifying): blocks only when a firing's controls are all green at audit time; 0 calibration firing(s), 0 clean firings."
+    },
+    {
+      "trigger": "mock-mutation-proven",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": [],
+      "tier": "self-certifying",
+      "blockEligible": true,
+      "reason": "block-eligible (self-certifying): blocks only when a firing's controls are all green at audit time; 0 calibration firing(s), 0 clean firings."
+    },
+    {
+      "trigger": "no-op-fix-proven",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": [],
+      "tier": "self-certifying",
+      "blockEligible": true,
+      "reason": "block-eligible (self-certifying): blocks only when a firing's controls are all green at audit time; 0 calibration firing(s), 0 clean firings."
+    },
+    {
+      "trigger": "type-suppression-proven",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": [],
+      "tier": "self-certifying",
+      "blockEligible": true,
+      "reason": "block-eligible (self-certifying): blocks only when a firing's controls are all green at audit time; 0 calibration firing(s), 0 clean firings."
+    },
+    {
+      "trigger": "fake-refactor-proven",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": [],
+      "tier": "self-certifying",
+      "blockEligible": true,
+      "reason": "block-eligible (self-certifying): blocks only when a firing's controls are all green at audit time; 0 calibration firing(s), 0 clean firings."
+    },
+    {
+      "trigger": "dead-branch-proven",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": [],
+      "tier": "self-certifying",
+      "blockEligible": true,
+      "reason": "block-eligible (self-certifying): blocks only when a firing's controls are all green at audit time; 0 calibration firing(s), 0 clean firings."
+    }
+  ],
+  "blockEligibleTriggers": [
+    "claim-falsified",
+    "obligation-failure",
+    "test-tamper-proven",
+    "mock-mutation-proven",
+    "no-op-fix-proven",
+    "type-suppression-proven",
+    "fake-refactor-proven",
+    "dead-branch-proven"
+  ],
+  "blockEligibleCount": 8
+}

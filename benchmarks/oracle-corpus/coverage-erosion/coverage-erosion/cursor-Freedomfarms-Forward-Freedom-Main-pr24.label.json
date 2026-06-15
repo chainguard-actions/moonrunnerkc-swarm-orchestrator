@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "src/components/BudgetCommandCenter.jsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/Freedomfarms/Forward-Freedom-Main/pull/24",
+  "prTitle": "Align Income and Budget hero month navigation sizing",
+  "sha256": "21427f3a87d81103d7a41d09cea93a7543214be87647f792ced2330b14ce0b2b"
+}

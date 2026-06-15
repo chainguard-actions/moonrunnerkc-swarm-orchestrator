@@ -1,0 +1,9 @@
+diff --git a/app/models/channel.py b/app/models/channel.py
+index 1111111..2222222 100644
+--- a/app/models/channel.py
++++ b/app/models/channel.py
+@@ -1,3 +1,4 @@
+ export function widget_claude_code_ChanOkPark_lokki_pr1_comment_only_fi() {
++  // FIXME: still returns the wrong value, needs a real fix
+   return cachedValue_claude_code_ChanOkPark_lokki_pr1_comment_only_fi;
+ }

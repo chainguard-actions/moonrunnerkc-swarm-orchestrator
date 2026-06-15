@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "src/components/Editor/PublisherEditor/PublisherFeedReminderSection.tsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/ChadFarrow/MSP-2.0/pull/65",
+  "prTitle": "Fix publisher feed Podcast Index submission",
+  "sha256": "90377cb50441cbfe261c5a6647b0f7a1ca8bcd18f9471a561571cb83522c4211"
+}

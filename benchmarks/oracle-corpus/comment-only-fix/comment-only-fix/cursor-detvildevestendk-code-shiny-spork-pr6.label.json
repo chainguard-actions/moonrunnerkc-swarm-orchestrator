@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "frontend/src/main.tsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/detvildevestendk-code/shiny-spork/pull/6",
+  "prTitle": "Scaffold and harden AI futures trading bot",
+  "sha256": "7f840b99d2312c9c16cbe482d96aa944661439e8673376ff57ffa9a7ee327b55"
+}

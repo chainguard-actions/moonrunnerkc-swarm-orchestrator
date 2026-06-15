@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "src/components/Editor/PublisherEditor/PublishSection.tsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/ChadFarrow/MSP-2.0/pull/65",
+  "prTitle": "Fix publisher feed Podcast Index submission",
+  "sha256": "659a8f460447a989f9dfaf46644adcfb840b53de47f2cde4f933ea63ba49973c"
+}

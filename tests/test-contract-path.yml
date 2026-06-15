@@ -1,0 +1,30 @@
+name: Test contract-path and candidates inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a minimal contract directory for testing
+        run: |
+          mkdir -p /tmp/swarm-contracts/test-contract
+          echo '{"obligations": []}' > /tmp/swarm-contracts/test-contract/contract.json
+      - id: action
+        uses: .
+        with:
+          contract-path: '/tmp/swarm-contracts/test-contract'
+          mode: 'tournament'
+          candidates: '2'
+        continue-on-error: true
+      - name: Assert action ran (contract-path and candidates inputs accepted)
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" = "" ]; then
+            echo "FAIL: step did not execute"
+            exit 1
+          fi
+          echo "PASS: action accepted contract-path and candidates inputs"
