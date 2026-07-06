@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-06-13T04:19:30.901Z",
+  "id": "claude-code-Inteliflowai-core-platform-pr27",
+  "repo": "Inteliflowai/core-platform",
+  "prNumber": 27,
+  "url": "https://github.com/Inteliflowai/core-platform/pull/27",
+  "headSha": "a9863bf51a6f5b5d1f0f9886e740aa61b884b1a6",
+  "vendor": "claude-code",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {
+    "type-suppression:not-proven:not-tsc-checkable": 3
+  },
+  "advisoryFindings": [
+    {
+      "category": "error-swallow",
+      "file": "app/api/teacher/admin/profile-export/route.ts",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "error-swallow",
+      "file": "app/api/teacher/admin/roster-anchor/apply/route.ts",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "error-swallow",
+      "file": "app/api/teacher/admin/roster-anchor/review/route.ts",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "type-suppression",
+      "file": "scripts/dev/test-match-review.ts",
+      "line": 4,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "type-suppression",
+      "file": "scripts/dev/test-profile-export.ts",
+      "line": 3,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "type-suppression",
+      "file": "scripts/dev/test-roster-anchor.ts",
+      "line": 4,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:error-swallow|type-suppression"
+  ]
+}

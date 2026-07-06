@@ -1,0 +1,15 @@
+{
+  "id": "devin-benchflow-ai-benchflow-pr349",
+  "repo": "benchflow-ai/benchflow",
+  "headSha": "f496d7622aad7268c0007a30380974607f6cffb1",
+  "outcome": "survived",
+  "ecosystem": "python",
+  "hasPackageJson": false,
+  "hasLockfile": false,
+  "lockfile": null,
+  "testRunner": "pytest",
+  "nodeEngine": null,
+  "nodeSatisfiable": false,
+  "viable": true,
+  "reason": "viable: Python + pytest signal"
+}

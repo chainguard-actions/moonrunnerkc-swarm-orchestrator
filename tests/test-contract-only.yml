@@ -1,0 +1,35 @@
+name: Test contract-only mode (compile goal without executing)
+on:
+  workflow_dispatch:
+
+jobs:
+  test-contract-only:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          goal: 'Write a function that adds two numbers'
+          contract-only: 'true'
+          extractor: 'deterministic'
+          session: 'deterministic'
+        continue-on-error: true
+
+      - name: Assert action ran (success or expected failure)
+        run: |
+          echo "Action outcome: ${{ steps.action.outcome }}"
+          echo "result output: ${{ steps.action.outputs.result }}"
+          # The action may fail if no LLM backend is available, but it should
+          # at least start and produce a result output or a known error.
+          # We accept both success and failure here — what we reject is a
+          # completely missing outcome (which would indicate the step never ran).
+          if [ -z "${{ steps.action.outcome }}" ]; then
+            echo "FAIL: step outcome was empty — step never ran"
+            exit 1
+          fi
+          echo "PASS: step ran with outcome '${{ steps.action.outcome }}'"

@@ -1,0 +1,32 @@
+# Project audit config for the swarm-orchestrator repo itself.
+# Read by src/audit/cheat-detector/audit-config.ts when the dogfood
+# audit (.github/workflows/pr-audit.yml) runs against this repo.
+#
+# These files contain literal cheat patterns by design — detector unit
+# tests embed fixture diffs in template literals, rule packs and Cursor
+# .mdc files quote the patterns as documentation, and the corpus
+# generator emits intentionally-broken patches as test data. They are
+# not real code introducing the patterns, but a regex-based detector
+# can't tell the difference without lexical analysis of the host file.
+excludePaths:
+  - "test/audit/cheat-detector/**.test.ts"
+  - "integrations/cursor/**.mdc"
+  - "scripts/corpus/**.ts"
+
+# Execution-grounded layer: the merge gate (`swarm audit --mode gate` in
+# pr-audit.yml) blocks only on a self-certifying runtime proof, and the
+# differential test-restoration proof is the one that gates. With it enabled, a
+# PR that weakens a test guarding a real failure is caught and blocked; without
+# it, no trigger can fire and the gate passes every PR. --pr audits only; a
+# diff-only audit never reaches it.
+#
+# Mutation and coverage are circumstantial signals that are not gate-eligible
+# (below the Wilson bar in block-eligibility.json), so they would only add
+# wall-clock cost and, running before restoration in the per-PR budget, could
+# starve the proof that does gate. They stay off here; restoration runs against
+# the provisioned pair regardless of these sub-flags.
+executionGrounded:
+  enabled: true
+  mutation: false
+  coverage: false
+  issueRepro: false

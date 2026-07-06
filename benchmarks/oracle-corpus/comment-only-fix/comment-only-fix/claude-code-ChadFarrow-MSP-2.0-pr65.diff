@@ -1,0 +1,9 @@
+diff --git a/src/components/Editor/PublisherEditor/PublishSection.tsx b/src/components/Editor/PublisherEditor/PublishSection.tsx
+index 1111111..2222222 100644
+--- a/src/components/Editor/PublisherEditor/PublishSection.tsx
++++ b/src/components/Editor/PublisherEditor/PublishSection.tsx
+@@ -1,3 +1,4 @@
+ export function widget_claude_code_ChadFarrow_MSP_2_0_pr65_comment_only() {
++  // FIXME: still returns the wrong value, needs a real fix
+   return cachedValue_claude_code_ChadFarrow_MSP_2_0_pr65_comment_only;
+ }

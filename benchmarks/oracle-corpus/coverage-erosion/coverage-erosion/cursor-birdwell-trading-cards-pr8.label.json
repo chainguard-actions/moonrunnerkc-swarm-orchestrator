@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "client/src/features/brand/BrandOverviewGrid.tsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/birdwell/trading-cards/pull/8",
+  "prTitle": "feat(ui): extend editorial redesign to brands and edit pages",
+  "sha256": "60beb2e911f615dea4405c5abf10acf5cd89beb4c6ebace6c539bfbd424e0c1d"
+}

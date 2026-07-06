@@ -1,0 +1,37 @@
+{
+  "generatedAt": "2026-06-13T04:39:49.328Z",
+  "id": "codex-cli-zaks-io-agent-paste-pr509",
+  "repo": "zaks-io/agent-paste",
+  "prNumber": 509,
+  "url": "https://github.com/zaks-io/agent-paste/pull/509",
+  "headSha": "119a17c73634f8fa9e426ee4368ac9f8e41fabe6",
+  "vendor": "codex-cli",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "not-provisioned",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "no-op-fix",
+      "file": "apps/apex/scripts/prerender.mjs",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "apps/web/vite.config.ts",
+      "line": 1,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [
+    "provision: sandbox-install-failed: dependency install (/opt/homebrew/opt/node@22/bin/corepack pnpm install --no-frozen-lockfile) failed in /var/folders/1q/2_tt_q515bs98g0f5v17_sdc0000gn/T/swarm-hunt-ws-Jbynqn/eg-zaks-io-agent-paste-119a17c7-3jw5dB"
+  ],
+  "note": "provision: sandbox-install-failed: dependency install (/opt/homebrew/opt/node@22/bin/corepack pnpm install --no-frozen-lockfile) failed in /var/folders/1q/2_tt_q515bs98g0f5v17_sdc0000gn/T/swarm-hunt-ws-Jbynqn/eg-zaks-io-agent-paste-119a17c7-3jw5dB",
+  "flags": [
+    "candidate-flagged:no-op-fix"
+  ]
+}

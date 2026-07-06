@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-06-13T04:41:15.856Z",
+  "id": "cursor-moka-neko--nests-webapp-001-pr3",
+  "repo": "moka-neko/-nests-webapp-001",
+  "prNumber": 3,
+  "url": "https://github.com/moka-neko/-nests-webapp-001/pull/3",
+  "headSha": "574bbc697aad8d0596cec3f484f557354cec75f1",
+  "vendor": "cursor",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "mock-of-hallucination",
+      "file": "src/mail/mail.service.spec.ts",
+      "line": 7,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:mock-of-hallucination"
+  ]
+}

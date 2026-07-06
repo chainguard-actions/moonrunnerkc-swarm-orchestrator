@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "app/models/channel.py",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/ChanOkPark/lokki/pull/1",
+  "prTitle": "YouTube 트렌드 & 경쟁채널 자동 리서치 서비스 구현",
+  "sha256": "5514015df5b9556cf965d06ea00d4c2b762773f1ab84638ece2e46fe108bbf57"
+}

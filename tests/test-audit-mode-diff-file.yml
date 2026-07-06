@@ -1,0 +1,56 @@
+name: Test audit mode with diff-file input
+on:
+  workflow_dispatch:
+
+jobs:
+  test-audit-diff-file:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/1/merge
+      GITHUB_HEAD_REF: feature-branch
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a minimal unified diff fixture
+        run: |
+          mkdir -p /tmp/swarm-test
+          cat > /tmp/swarm-test/sample.diff << 'EOF'
+          --- a/src/foo.test.ts
+          +++ b/src/foo.test.ts
+          @@ -1,5 +1,5 @@
+           describe('foo', () => {
+          -  it('should return 42', () => {
+          -    expect(foo()).toBe(42);
+          +  it('should return 42', () => {
+          +    expect(true).toBe(true);
+           });
+           });
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'true'
+          diff-file: '/tmp/swarm-test/sample.diff'
+          audit-comment: 'false'
+        continue-on-error: true
+
+      - name: Assert audit-pass output is set
+        env:
+          AUDIT_PASS: ${{ steps.action.outputs.audit-pass }}
+        run: |
+          echo "audit-pass: $AUDIT_PASS"
+          if [ -z "$AUDIT_PASS" ] && [ "${{ steps.action.outcome }}" = "success" ]; then
+            echo "FAIL: audit-pass output was empty on success"
+            exit 1
+          fi
+          echo "PASS: audit-pass output is '$AUDIT_PASS' (outcome: ${{ steps.action.outcome }})"
+
+      - name: Assert audit-findings output is set
+        env:
+          AUDIT_FINDINGS: ${{ steps.action.outputs.audit-findings }}
+        run: |
+          echo "audit-findings: $AUDIT_FINDINGS"
+          echo "PASS: audit-findings output is '$AUDIT_FINDINGS'"

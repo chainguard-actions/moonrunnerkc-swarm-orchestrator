@@ -1,0 +1,12 @@
+{
+  "category": "goal-not-fixed",
+  "injectorId": "goal-not-fixed",
+  "file": "lib/movers-types/src/injected_goal_cursor_achase1982_afk_Alpha_Terminal_pr497_goal_.ts",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/achase1982-afk/Alpha-Terminal/pull/497",
+  "prTitle": "Fix first_cursor_achase1982_afk_Alpha_Terminal_pr497_goal_: return a safe default instead of crashing on empty input",
+  "claim": "Fix first_cursor_achase1982_afk_Alpha_Terminal_pr497_goal_: return a safe default instead of crashing on empty input",
+  "sha256": "6b02fddbdd2a40bbd3c64873887a47f95cb51f9c986274946d34386168c70deb"
+}

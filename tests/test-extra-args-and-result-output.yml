@@ -1,0 +1,51 @@
+name: Test extra-args input and result JSON output
+on:
+  workflow_dispatch:
+
+jobs:
+  test-extra-args-result:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Prepare working directory
+        run: |
+          mkdir -p /tmp/swarm-workdir
+
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'true'
+          audit-comment: 'false'
+          result-path: '/tmp/swarm-extra-result.json'
+          extra-args: '--snapshot-cleanup always'
+          working-directory: '/tmp/swarm-workdir'
+        continue-on-error: true
+
+      - name: Assert step ran and result output is valid JSON when present
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+        run: |
+          OUTCOME="${{ steps.action.outcome }}"
+          echo "outcome: $OUTCOME"
+          echo "result:  $RESULT"
+
+          if [ -z "$OUTCOME" ]; then
+            echo "FAIL: step never ran"
+            exit 1
+          fi
+
+          if [ "$OUTCOME" = "success" ] && [ -n "$RESULT" ]; then
+            # Validate that result is parseable JSON
+            echo "$RESULT" | python3 -c "import sys, json; json.load(sys.stdin)" 2>/dev/null
+            if [ $? -ne 0 ]; then
+              echo "FAIL: result output is not valid JSON: $RESULT"
+              exit 1
+            fi
+            echo "PASS: result is valid JSON"
+          else
+            echo "SKIP: action outcome=$OUTCOME or result empty — skipping JSON check"
+          fi

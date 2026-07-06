@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-06-13T04:55:59.383Z",
+  "id": "copilot-workspace-Billos-Sparkleft-pr76",
+  "repo": "Billos/Sparkleft",
+  "prNumber": 76,
+  "url": "https://github.com/Billos/Sparkleft/pull/76",
+  "headSha": "3503e69464ebddf06c2f7e3c0c9fb256b984688d",
+  "vendor": "copilot-workspace",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "no-op-fix",
+      "file": "src/config.ts",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "src/queues/jobs/budgetSumUp.ts",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/queues/jobs/budgetSumUp.ts",
+      "line": 23,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:no-op-fix|coverage-erosion"
+  ]
+}

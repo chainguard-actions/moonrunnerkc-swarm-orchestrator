@@ -1,0 +1,95 @@
+{
+  "generatedAt": "2026-06-13T04:10:56.393Z",
+  "id": "devin-codev-workshops-onboarding-diary-pr19",
+  "repo": "codev-workshops/onboarding-diary",
+  "prNumber": 19,
+  "url": "https://github.com/codev-workshops/onboarding-diary/pull/19",
+  "headSha": "b67f4f816f1faa5d3c74bd4c12ad2905d7e7169b",
+  "vendor": "devin",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "no-op-fix",
+      "file": "src/app/layout.tsx",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "src/components/chat/ChatContainer.tsx",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "src/components/products/ProductCard.tsx",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "src/components/products/ProductCardSkeleton.tsx",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "src/components/products/ProductDetail.tsx",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/components/chat/ChatContainer.tsx",
+      "line": 102,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/components/chat/ChatContainer.tsx",
+      "line": 104,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/components/chat/ChatContainer.tsx",
+      "line": 108,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/components/chat/ChatContainer.tsx",
+      "line": 112,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/components/chat/ChatContainer.tsx",
+      "line": 130,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/components/chat/ChatContainer.tsx",
+      "line": 135,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/components/products/ProductCard.tsx",
+      "line": 28,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:no-op-fix|coverage-erosion"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-06-13T04:28:39.571Z",
+  "id": "claude-code-Inteliflowai-core-platform-pr23",
+  "repo": "Inteliflowai/core-platform",
+  "prNumber": 23,
+  "url": "https://github.com/Inteliflowai/core-platform/pull/23",
+  "headSha": "c7bc1f0056c9752c98ada4f22d87c9a13cd02f48",
+  "vendor": "claude-code",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "no-op-fix",
+      "file": "app/(public)/core/page.tsx",
+      "line": 1,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:no-op-fix"
+  ]
+}

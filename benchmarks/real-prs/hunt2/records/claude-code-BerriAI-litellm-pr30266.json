@@ -1,0 +1,37 @@
+{
+  "generatedAt": "2026-06-13T05:00:28.787Z",
+  "id": "claude-code-BerriAI-litellm-pr30266",
+  "repo": "BerriAI/litellm",
+  "prNumber": 30266,
+  "url": "https://github.com/BerriAI/litellm/pull/30266",
+  "headSha": "69d9d292e3435fe783a7f23878f8103fcd9b9c0b",
+  "vendor": "claude-code",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {
+    "type-suppression:not-proven:non-typescript-file": 1
+  },
+  "advisoryFindings": [
+    {
+      "category": "error-swallow",
+      "file": "litellm/passthrough/timeout_utils.py",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "type-suppression",
+      "file": "litellm/proxy/pass_through_endpoints/pass_through_endpoints.py",
+      "line": 700,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:error-swallow|type-suppression"
+  ]
+}

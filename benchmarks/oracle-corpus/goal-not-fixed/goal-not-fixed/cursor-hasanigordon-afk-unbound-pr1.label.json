@@ -1,0 +1,12 @@
+{
+  "category": "goal-not-fixed",
+  "injectorId": "goal-not-fixed",
+  "file": "src/components/commandCenter/injected_goal_cursor_hasanigordon_afk_unbound_pr1_goal_not_fix.ts",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/hasanigordon-afk/unbound/pull/1",
+  "prTitle": "Fix first_cursor_hasanigordon_afk_unbound_pr1_goal_not_fix: return a safe default instead of crashing on empty input",
+  "claim": "Fix first_cursor_hasanigordon_afk_unbound_pr1_goal_not_fix: return a safe default instead of crashing on empty input",
+  "sha256": "93196aa41111a596aa9c8e266e00a24ba4f2a01e4ecf512404f8f47183dc1b37"
+}

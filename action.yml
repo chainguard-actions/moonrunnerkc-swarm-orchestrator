@@ -1,0 +1,166 @@
+name: 'Swarm Audit — the merge gate for AI-generated PRs'
+description: 'Audits PRs opened by AI coding agents for cheat patterns (test relaxation, mock-of-hallucination, assertion strip, no-op fix). Posts findings as a PR comment and gates merges on blocking results. Also runs the legacy v8 orchestrator pipeline when invoked with goal/contract-path.'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  # ── Audit mode (v10, default trigger: pull_request) ──────────────────────
+  audit-mode:
+    description: |
+      Set to true to run `swarm audit` against a PR diff. When true, the
+      action operates as a merge gate: exit 0 = pass, exit 1 = blocking
+      findings. Pairs with `pr` (default: ${{ github.event.pull_request.number }}).
+    required: false
+    default: 'false'
+  pr:
+    description: |
+      PR reference for audit mode. owner/repo#NN, a GitHub PR URL, or just
+      the PR number (the action infers owner/repo from GITHUB_REPOSITORY).
+    required: false
+  diff-file:
+    description: |
+      Path to a unified diff on disk (alternative to `pr`). Used by
+      audit mode when a diff is already materialized.
+    required: false
+  emit-aibom:
+    description: |
+      Emit an AI-BOM artifact alongside the audit. Values: cyclonedx-ml |
+      spdx-ai | both. Output written to .swarm/aibom/.
+    required: false
+  audit-comment:
+    description: |
+      When true (the default in audit mode), the action posts the rendered
+      Markdown comment to the PR using GITHUB_TOKEN.
+    required: false
+    default: 'true'
+
+  # ── Legacy v8 orchestrator mode ──────────────────────────────────────────
+  goal:
+    description: |
+      Natural-language goal. Compiled into a contract and executed unless
+      contract-only is true. Mutually exclusive with contract-path.
+    required: false
+  contract-path:
+    description: |
+      Path to an already-compiled contract directory (skips compile). Use
+      this when you compile contracts in a prior step and want to run them
+      verbatim. Mutually exclusive with goal.
+    required: false
+  contract-only:
+    description: |
+      When true, compile the goal into a contract and stop without
+      executing it. The contract directory under .swarm/contracts/ is the
+      artifact. Requires goal (cannot be combined with contract-path).
+    required: false
+    default: 'false'
+
+  # ── Deterministic-extractor contract source ──────────────────────────────
+  contract-file:
+    description: |
+      Path to a YAML or JSON contract file. Consumed by the deterministic
+      extractor; pairs with goal to produce a compiled contract without an
+      LLM round-trip.
+    required: false
+  contract-module:
+    description: |
+      Path to a TS/JS module whose default export is a contract object.
+      Deterministic extractor only.
+    required: false
+
+  # ── Provider selection ────────────────────────────────────────────────────
+  extractor:
+    description: 'Extractor provider: deterministic | local | anthropic.'
+    required: false
+  session:
+    description: 'Session provider: deterministic | local | anthropic.'
+    required: false
+  model:
+    description: |
+      Model id override (anthropic provider). API keys are NEVER passed as
+      inputs — set ANTHROPIC_API_KEY through the workflow `env:` block.
+    required: false
+
+  # ── Local-provider settings ──────────────────────────────────────────────
+  local-backend:
+    description: 'Local backend: openai-compatible | ollama | llama-cpp | vllm.'
+    required: false
+  local-base-url:
+    description: 'Base URL for the local provider.'
+    required: false
+  local-model-extractor:
+    description: 'Local-provider model id for the extractor (compile pass).'
+    required: false
+  local-model-session:
+    description: 'Local-provider model id for the session (run pass).'
+    required: false
+  local-grammar:
+    description: 'Grammar mode: auto | gbnf | json-schema | outlines | none.'
+    required: false
+
+  # ── Patches (deterministic session) ──────────────────────────────────────
+  external-patches-queue:
+    description: 'Path to a JSONL queue of patch envelopes (deterministic session).'
+    required: false
+  external-patches-dir:
+    description: 'Path to a watched dir of patch envelopes (deterministic session).'
+    required: false
+
+  # ── Run knobs ────────────────────────────────────────────────────────────
+  falsifiers:
+    description: 'on (default) | off — disables falsifier adapter calls when off.'
+    required: false
+  mode:
+    description: 'Execution mode: single (default) | tournament.'
+    required: false
+  candidates:
+    description: 'Tournament candidates per round (1-8). Ignored in single mode.'
+    required: false
+  max-obligations:
+    description: 'Cap on the number of obligations attempted per run.'
+    required: false
+  cost-cap:
+    description: 'Live output-token ceiling; aborts streams once projected output crosses it.'
+    required: false
+
+  # ── Workspace ────────────────────────────────────────────────────────────
+  repo-root:
+    description: 'Project root for repo-context discovery (default: GITHUB_WORKSPACE).'
+    required: false
+  working-directory:
+    description: 'Directory to cd into before running. Default: GITHUB_WORKSPACE.'
+    required: false
+  result-path:
+    description: |
+      Where the structured run-result JSON is written. Default:
+      /tmp/swarm-result.json. The entrypoint always reads this path back
+      into the `result` step output.
+    required: false
+
+  # ── Escape valve ─────────────────────────────────────────────────────────
+  extra-args:
+    description: |
+      Additional raw CLI flags appended verbatim to the swarm invocation,
+      whitespace-separated (shell-style quoting respected). Use this only
+      for flags not exposed above (e.g. `--snapshot-cleanup always`,
+      `--forbid-import lodash`, `--falsifier-scheduler ucb1`).
+    required: false
+
+outputs:
+  result:
+    description: 'JSON summary of the run (obligations satisfied, tokens, wall time).'
+  audit-pass:
+    description: 'Audit mode: "true" when no blocking findings, "false" when blocking.'
+  audit-findings:
+    description: 'Audit mode: count of blocking findings.'
+  audit-ledger:
+    description: 'Audit mode: path to the JSONL evidence ledger written by the run.'
+
+runs:
+  using: 'docker'
+  # Prebuilt image published by .github/workflows/cd.yml on every v11.x tag.
+  # Pulling beats rebuilding the TypeScript toolchain inside Docker on every
+  # PR audit (minutes to seconds for consumers). The :11 tag tracks the
+  # latest 11.x release; pin a full version or digest for stricter
+  # supply-chain guarantees.
+  image: 'docker://ghcr.io/moonrunnerkc/swarm-orchestrator@sha256:ea5d7e6b94c66bc181c74a6596be2231eac243f7dee1d69b80db2c840fa7f05b' # :11

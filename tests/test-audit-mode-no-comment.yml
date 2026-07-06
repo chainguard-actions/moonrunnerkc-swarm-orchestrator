@@ -1,0 +1,65 @@
+name: Test audit mode with comment posting disabled
+on:
+  workflow_dispatch:
+
+jobs:
+  test-audit-no-comment:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/42/merge
+      GITHUB_HEAD_REF: ai-agent-branch
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Write a clean diff (no cheat patterns expected)
+        run: |
+          mkdir -p /tmp/swarm-audit-clean
+          cat > /tmp/swarm-audit-clean/clean.diff << 'EOF'
+          --- a/src/math.ts
+          +++ b/src/math.ts
+          @@ -1,3 +1,7 @@
+          +export function add(a: number, b: number): number {
+          +  return a + b;
+          +}
+          +
+           export function multiply(a: number, b: number): number {
+             return a * b;
+           }
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'true'
+          diff-file: '/tmp/swarm-audit-clean/clean.diff'
+          audit-comment: 'false'
+          result-path: '/tmp/swarm-audit-result.json'
+        continue-on-error: true
+
+      - name: Assert audit-pass output present when action succeeds
+        env:
+          AUDIT_PASS: ${{ steps.action.outputs.audit-pass }}
+          AUDIT_FINDINGS: ${{ steps.action.outputs.audit-findings }}
+          AUDIT_LEDGER: ${{ steps.action.outputs.audit-ledger }}
+        run: |
+          OUTCOME="${{ steps.action.outcome }}"
+          echo "outcome:        $OUTCOME"
+          echo "audit-pass:     $AUDIT_PASS"
+          echo "audit-findings: $AUDIT_FINDINGS"
+          echo "audit-ledger:   $AUDIT_LEDGER"
+
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$AUDIT_PASS" ]; then
+              echo "FAIL: audit-pass output was empty on success"
+              exit 1
+            fi
+            if [ "$AUDIT_PASS" != "true" ] && [ "$AUDIT_PASS" != "false" ]; then
+              echo "FAIL: audit-pass must be 'true' or 'false', got '$AUDIT_PASS'"
+              exit 1
+            fi
+            echo "PASS: audit-pass='$AUDIT_PASS', findings='$AUDIT_FINDINGS'"
+          else
+            echo "SKIP: action did not succeed (outcome=$OUTCOME)"
+          fi

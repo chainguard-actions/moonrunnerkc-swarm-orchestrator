@@ -1,0 +1,11 @@
+{
+  "category": "no-op-fix",
+  "injectorId": "no-op-fix",
+  "file": "internal/prompt/identity.go",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 3,
+  "sourcePrUrl": "https://github.com/satoricorp/gx/pull/6",
+  "prTitle": "Add huh interactive prompts for gx init and modify",
+  "sha256": "44da9ff5d5084a9e9114c556ceba50fb0de8861d137c21f28b175c5d290ab306"
+}

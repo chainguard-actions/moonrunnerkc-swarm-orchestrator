@@ -1,0 +1,15 @@
+{
+  "id": "cursor-tpiola-reidasvendas-pr23",
+  "repo": "tpiola/reidasvendas",
+  "headSha": "6be634877d485218b0ffe38a0abfaf58c55d029b",
+  "outcome": "hotfixed",
+  "ecosystem": null,
+  "hasPackageJson": false,
+  "hasLockfile": false,
+  "lockfile": null,
+  "testRunner": null,
+  "nodeEngine": null,
+  "nodeSatisfiable": false,
+  "viable": false,
+  "reason": "repo/sha contents unreadable (HTTP 404)"
+}

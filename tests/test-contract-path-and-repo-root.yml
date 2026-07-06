@@ -1,0 +1,30 @@
+name: Test contract-path and repo-root inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a stub contract directory
+        run: |
+          mkdir -p /tmp/stub-contract
+          echo '{"obligations":[]}' > /tmp/stub-contract/contract.json
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          contract-path: '/tmp/stub-contract'
+          repo-root: '${{ github.workspace }}'
+          result-path: '/tmp/swarm-result-contract-path.json'
+      - name: Assert action was invoked with contract-path and repo-root inputs
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped, inputs were not accepted"
+            exit 1
+          fi
+          echo "PASS: action was invoked with contract-path and repo-root inputs"

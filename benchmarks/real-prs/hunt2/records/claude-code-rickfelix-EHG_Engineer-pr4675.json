@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-06-13T04:15:09.316Z",
+  "id": "claude-code-rickfelix-EHG_Engineer-pr4675",
+  "repo": "rickfelix/EHG_Engineer",
+  "prNumber": 4675,
+  "url": "https://github.com/rickfelix/EHG_Engineer/pull/4675",
+  "headSha": "a0667b6d995c4ba163c5e35406ec3d01339ba82d",
+  "vendor": "claude-code",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "error-swallow",
+      "file": "scripts/qf-start.js",
+      "line": 1,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:error-swallow"
+  ]
+}

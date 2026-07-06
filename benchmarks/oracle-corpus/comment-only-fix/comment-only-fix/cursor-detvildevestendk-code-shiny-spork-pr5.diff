@@ -1,0 +1,9 @@
+diff --git a/backend/app/core/config.py b/backend/app/core/config.py
+index 1111111..2222222 100644
+--- a/backend/app/core/config.py
++++ b/backend/app/core/config.py
+@@ -1,3 +1,4 @@
+ export function widget_cursor_detvildevestendk_code_shiny_spork_pr5_com() {
++  // FIXME: still returns the wrong value, needs a real fix
+   return cachedValue_cursor_detvildevestendk_code_shiny_spork_pr5_com;
+ }

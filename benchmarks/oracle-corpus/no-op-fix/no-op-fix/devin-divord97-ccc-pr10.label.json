@@ -1,0 +1,11 @@
+{
+  "category": "no-op-fix",
+  "injectorId": "no-op-fix",
+  "file": "internal/application/imhub/service.go",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 3,
+  "sourcePrUrl": "https://github.com/divord97/ccc/pull/10",
+  "prTitle": "Phase 8: Omnichannel IM + Email + AI Assist (DDD/TDD)",
+  "sha256": "69f5b2fc67610585c283027df3109c13d2d4f1e1393b7d85b1bfa6116a6c1287"
+}

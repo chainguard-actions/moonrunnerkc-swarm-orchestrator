@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-06-11T00:54:12.442Z",
+  "runs": [
+    {
+      "corpus": "regression",
+      "repo": "tldraw/tldraw",
+      "pr": 7880,
+      "ms": 1442153,
+      "findings": 1,
+      "skipped": 1
+    },
+    {
+      "corpus": "regression",
+      "repo": "tldraw/tldraw",
+      "pr": 8306,
+      "ms": 995549,
+      "findings": 14,
+      "skipped": 1
+    },
+    {
+      "corpus": "regression",
+      "repo": "tldraw/tldraw",
+      "pr": 8378,
+      "ms": 708797,
+      "findings": 1,
+      "skipped": 1
+    }
+  ]
+}

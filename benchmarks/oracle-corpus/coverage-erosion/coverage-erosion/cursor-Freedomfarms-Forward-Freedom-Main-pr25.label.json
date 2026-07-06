@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "src/components/OperationsBoard.jsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/Freedomfarms/Forward-Freedom-Main/pull/25",
+  "prTitle": "Command Center: True Cash metric card and current-month cash flow only",
+  "sha256": "e690b01ca8fd85bcaa0a86b30bdbc62ff027d2db92ece9f4a145ed73e8785ddc"
+}

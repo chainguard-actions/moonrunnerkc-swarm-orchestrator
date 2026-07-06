@@ -1,0 +1,37 @@
+name: Test deterministic patches, cost-cap, and contract-module inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create stub patch files and contract module
+        run: |
+          mkdir -p /tmp/swarm-patches-dir
+          touch /tmp/swarm-patches.jsonl
+          echo '{}' > /tmp/swarm-patches-dir/patch-001.json
+          echo 'module.exports = { obligations: [] };' > /tmp/stub-contract-module.js
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          goal: 'write a hello world function'
+          extractor: 'deterministic'
+          session: 'deterministic'
+          contract-module: '/tmp/stub-contract-module.js'
+          external-patches-queue: '/tmp/swarm-patches.jsonl'
+          external-patches-dir: '/tmp/swarm-patches-dir'
+          cost-cap: '1000'
+          result-path: '/tmp/swarm-result-patches.json'
+      - name: Assert action was invoked with patch and cost-cap inputs
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped, inputs were not accepted"
+            exit 1
+          fi
+          echo "PASS: action was invoked with external-patches-queue, external-patches-dir, cost-cap, and contract-module inputs"

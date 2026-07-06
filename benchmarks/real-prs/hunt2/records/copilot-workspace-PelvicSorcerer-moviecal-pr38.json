@@ -1,0 +1,37 @@
+{
+  "generatedAt": "2026-06-13T04:56:48.685Z",
+  "id": "copilot-workspace-PelvicSorcerer-moviecal-pr38",
+  "repo": "PelvicSorcerer/moviecal",
+  "prNumber": 38,
+  "url": "https://github.com/PelvicSorcerer/moviecal/pull/38",
+  "headSha": "e9ca4451361ecbb0e33f8209848b2a40ea852bee",
+  "vendor": "copilot-workspace",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "mock-of-hallucination",
+      "file": ".github/workflows/supabase-verify.yml",
+      "line": 35,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "scripts/supabase-db-lint.sh",
+      "line": 1,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [
+    "no mutable source lines in diff"
+  ],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:mock-of-hallucination|no-op-fix"
+  ]
+}

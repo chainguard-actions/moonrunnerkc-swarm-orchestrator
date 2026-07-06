@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-06-13T04:56:48.682Z",
+  "id": "copilot-workspace-ProLoser-screenwriter-pr30",
+  "repo": "ProLoser/screenwriter",
+  "prNumber": 30,
+  "url": "https://github.com/ProLoser/screenwriter/pull/30",
+  "headSha": "fe466fb4116d5fdb76c09b27ba197db81564fb67",
+  "vendor": "copilot-workspace",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "no-op-fix",
+      "file": "script.jsx",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "script.jsx",
+      "line": 127,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "script.jsx",
+      "line": 139,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "script.jsx",
+      "line": 231,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "script.jsx",
+      "line": 245,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:no-op-fix|coverage-erosion"
+  ]
+}

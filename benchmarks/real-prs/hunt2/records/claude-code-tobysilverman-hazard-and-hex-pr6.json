@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-06-13T04:54:20.648Z",
+  "id": "claude-code-tobysilverman-hazard-and-hex-pr6",
+  "repo": "tobysilverman/hazard-and-hex",
+  "prNumber": 6,
+  "url": "https://github.com/tobysilverman/hazard-and-hex/pull/6",
+  "headSha": "c6eddb93b284884a8c83b7305ee5a4c08aa7e727",
+  "vendor": "claude-code",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "error-swallow",
+      "file": "scripts/serve.ts",
+      "line": 1,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:error-swallow"
+  ]
+}

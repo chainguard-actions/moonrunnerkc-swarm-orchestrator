@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-06-13T04:59:37.332Z",
+  "id": "claude-code-Pranav-Karra-3301-tuck-pr93",
+  "repo": "Pranav-Karra-3301/tuck",
+  "prNumber": 93,
+  "url": "https://github.com/Pranav-Karra-3301/tuck/pull/93",
+  "headSha": "8419bd4228b716715d9c12e50c379e7e09c8cf95",
+  "vendor": "claude-code",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "not-provisioned",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "mock-of-hallucination",
+      "file": "tests/lib/keystorePlatform.test.ts",
+      "line": 7,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [
+    "provision: sandbox-install-failed: dependency install (/opt/homebrew/opt/node@22/bin/corepack pnpm install --no-frozen-lockfile) failed in /var/folders/1q/2_tt_q515bs98g0f5v17_sdc0000gn/T/swarm-hunt-ws-4vDPOJ/eg-Pranav-Karra-3301-tuck-8419bd42-rUr9lT"
+  ],
+  "note": "provision: sandbox-install-failed: dependency install (/opt/homebrew/opt/node@22/bin/corepack pnpm install --no-frozen-lockfile) failed in /var/folders/1q/2_tt_q515bs98g0f5v17_sdc0000gn/T/swarm-hunt-ws-4vDPOJ/eg-Pranav-Karra-3301-tuck-8419bd42-rUr9lT",
+  "flags": [
+    "candidate-flagged:mock-of-hallucination"
+  ]
+}

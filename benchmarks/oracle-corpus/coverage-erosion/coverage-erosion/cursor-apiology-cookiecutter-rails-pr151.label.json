@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "hooks/post_gen_project.py",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/apiology/cookiecutter-rails/pull/151",
+  "prTitle": "Update Solargraph to 0.59.2",
+  "sha256": "b804f5a419e8f30d3e1e3ba5bb759506d85d8d144238c84007c0f0fc66f6676c"
+}

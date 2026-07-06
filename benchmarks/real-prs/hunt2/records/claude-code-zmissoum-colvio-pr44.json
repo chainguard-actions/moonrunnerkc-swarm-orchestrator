@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-06-13T04:16:26.535Z",
+  "id": "claude-code-zmissoum-colvio-pr44",
+  "repo": "zmissoum/colvio",
+  "prNumber": 44,
+  "url": "https://github.com/zmissoum/colvio/pull/44",
+  "headSha": "319f1df51ce6ae42fd5459f2d2b6ac0637027cd9",
+  "vendor": "claude-code",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "no-op-fix",
+      "file": "src/components/Loader.jsx",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/components/Loader.jsx",
+      "line": 463,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/components/Loader.jsx",
+      "line": 464,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:no-op-fix|coverage-erosion"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "client/src/features/brand/components/BrandProgressBar.tsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/birdwell/trading-cards/pull/8",
+  "prTitle": "feat(ui): extend editorial redesign to brands and edit pages",
+  "sha256": "4e4b002ba4890f9bf3c84a9f6d64170e8a0ac2fe5ab069e7d50ed6082d0ddad6"
+}

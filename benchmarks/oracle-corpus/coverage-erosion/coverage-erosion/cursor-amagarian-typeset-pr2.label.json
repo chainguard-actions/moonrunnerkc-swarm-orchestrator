@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "scripts/form-feedback-loop.ts",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/amagarian/typeset/pull/2",
+  "prTitle": "Add form accuracy feedback loop",
+  "sha256": "49ce185218ed3f5714f840a4d35d3554b0d1922a92d74f5365d284fc05aa328f"
+}

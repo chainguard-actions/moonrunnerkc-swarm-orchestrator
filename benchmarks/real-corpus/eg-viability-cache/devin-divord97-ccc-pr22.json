@@ -1,0 +1,15 @@
+{
+  "id": "devin-divord97-ccc-pr22",
+  "repo": "divord97/ccc",
+  "headSha": "6867a7de4ded64f157f13141957864163035ca60",
+  "outcome": "survived",
+  "ecosystem": "go",
+  "hasPackageJson": false,
+  "hasLockfile": false,
+  "lockfile": null,
+  "testRunner": "go-test",
+  "nodeEngine": null,
+  "nodeSatisfiable": false,
+  "viable": true,
+  "reason": "viable: Go module (go.mod)"
+}

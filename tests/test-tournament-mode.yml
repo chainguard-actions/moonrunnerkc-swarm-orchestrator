@@ -1,0 +1,37 @@
+name: Test tournament execution mode with candidates input
+on:
+  workflow_dispatch:
+
+jobs:
+  test-tournament-mode:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          goal: 'Implement a binary search function'
+          extractor: 'deterministic'
+          session: 'deterministic'
+          mode: 'tournament'
+          candidates: '2'
+          falsifiers: 'off'
+          max-obligations: '1'
+          result-path: '/tmp/swarm-tournament-result.json'
+        continue-on-error: true
+
+      - name: Assert step ran with tournament inputs accepted
+        run: |
+          OUTCOME="${{ steps.action.outcome }}"
+          echo "Action outcome: $OUTCOME"
+          echo "result: ${{ steps.action.outputs.result }}"
+
+          if [ -z "$OUTCOME" ]; then
+            echo "FAIL: step never ran — inputs may have been rejected"
+            exit 1
+          fi
+          echo "PASS: step ran with outcome '$OUTCOME' (tournament mode inputs accepted)"

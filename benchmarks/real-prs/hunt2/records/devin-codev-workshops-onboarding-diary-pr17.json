@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-06-13T04:12:08.145Z",
+  "id": "devin-codev-workshops-onboarding-diary-pr17",
+  "repo": "codev-workshops/onboarding-diary",
+  "prNumber": 17,
+  "url": "https://github.com/codev-workshops/onboarding-diary/pull/17",
+  "headSha": "63a0a6db47bd28f567813f5e0cf4a02fca3bf873",
+  "vendor": "devin",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "no-op-fix",
+      "file": "src/components/chat/ChatContainer.tsx",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "src/components/chat/QuickActionChips.tsx",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "src/lib/agents/concierge.ts",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/components/chat/ChatContainer.tsx",
+      "line": 126,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:no-op-fix|coverage-erosion"
+  ]
+}

@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="100%" role="img" aria-labelledby="title desc">
+  <title id="title">Swarm Orchestrator</title>
+  <desc id="desc">A contract-first verification pipeline showing a goal becoming typed obligations, a persona swarm testing candidate patches, a verifier gate, and an append-only ledger.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07111f"/>
+      <stop offset="0.55" stop-color="#0c1727"/>
+      <stop offset="1" stop-color="#10131f"/>
+    </linearGradient>
+
+    <linearGradient id="accentLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="0.5" stop-color="#f59e0b"/>
+      <stop offset="1" stop-color="#34d399"/>
+    </linearGradient>
+
+    <filter id="panelShadow" x="-12%" y="-18%" width="124%" height="136%">
+      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#020617" flood-opacity="0.34"/>
+    </filter>
+
+    <style>
+      .sans { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; letter-spacing: 0; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; letter-spacing: 0; }
+      .kicker { font-size: 12px; font-weight: 800; fill: #8bd3dd; }
+      .title-a { font-size: 58px; font-weight: 850; fill: #f8fafc; }
+      .title-b { font-size: 58px; font-weight: 650; fill: #dbeafe; }
+      .lead { font-size: 18px; fill: #a8b4c7; }
+      .chip-text { font-size: 12px; font-weight: 750; fill: #d9f99d; }
+      .muted { fill: #8390a4; }
+      .panel { fill: #111c2e; stroke: #2a3a55; stroke-width: 1.2; filter: url(#panelShadow); }
+      .panel-soft { fill: #0e1a2d; stroke: #283955; stroke-width: 1; }
+      .label { font-size: 12px; font-weight: 800; fill: #f8fafc; }
+      .small { font-size: 10.5px; fill: #9ca9ba; }
+      .wire { fill: none; stroke: #4b607d; stroke-width: 1.4; }
+      .wire-hot { fill: none; stroke: #22d3ee; stroke-width: 2; }
+      .wire-ok { fill: none; stroke: #34d399; stroke-width: 2; }
+      .wire-warn { fill: none; stroke: #fb7185; stroke-width: 1.6; stroke-dasharray: 6 5; }
+      .node { fill: #101827; stroke: #6b7d98; stroke-width: 1.2; }
+      .node-core { fill: #22d3ee; }
+      .node-alt { fill: #f59e0b; }
+      .node-ok { fill: #34d399; }
+      .node-bad { fill: #fb7185; }
+      .contract { fill: #101827; stroke: #22d3ee; stroke-width: 1.4; }
+      .contract-fill { fill: #14283b; stroke: #22d3ee; stroke-width: 1.4; }
+      .gate { fill: #10251d; stroke: #34d399; stroke-width: 1.4; }
+      .ledger { fill: #122019; stroke: #34d399; stroke-width: 1; }
+      .reject { fill: #271622; stroke: #fb7185; stroke-width: 1; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="360" fill="url(#bg)"/>
+  <path d="M0 58H1200M0 118H1200M0 178H1200M0 238H1200M0 298H1200M100 0V360M220 0V360M340 0V360M460 0V360M580 0V360M700 0V360M820 0V360M940 0V360M1060 0V360" fill="none" stroke="#22314a" stroke-width="0.7" opacity="0.32"/>
+  <rect x="0" y="0" width="1200" height="5" fill="url(#accentLine)"/>
+
+  <g transform="translate(64 43)">
+    <rect x="0" y="0" width="286" height="30" rx="7" fill="#122237" stroke="#29405f"/>
+    <text class="mono kicker" x="15" y="20">CONTRACT-FIRST VERIFICATION</text>
+
+    <text class="sans title-a" x="0" y="88">Swarm</text>
+    <text class="sans title-b" x="0" y="148">Orchestrator</text>
+
+    <path d="M0 170H370" stroke="url(#accentLine)" stroke-width="3" stroke-linecap="round"/>
+    <text class="sans lead" x="0" y="205">Turn goals into typed obligations, test</text>
+    <text class="sans lead" x="0" y="230">candidate patches, then preserve evidence.</text>
+
+    <g transform="translate(0 270)">
+      <rect x="0" y="0" width="88" height="28" rx="7" fill="#13243a" stroke="#335174"/>
+      <text class="mono chip-text" x="44" y="18" text-anchor="middle">compile</text>
+      <rect x="98" y="0" width="65" height="28" rx="7" fill="#13243a" stroke="#335174"/>
+      <text class="mono chip-text" x="130.5" y="18" text-anchor="middle">run</text>
+      <rect x="173" y="0" width="82" height="28" rx="7" fill="#13243a" stroke="#335174"/>
+      <text class="mono chip-text" x="214" y="18" text-anchor="middle">resume</text>
+      <rect x="265" y="0" width="84" height="28" rx="7" fill="#13243a" stroke="#335174"/>
+      <text class="mono chip-text" x="307" y="18" text-anchor="middle">Node 20+</text>
+    </g>
+  </g>
+
+  <g transform="translate(492 38)">
+    <rect class="panel" x="0" y="0" width="650" height="284" rx="18"/>
+    <path d="M23 51H628M23 112H628M23 173H628M23 234H628M92 20V264M212 20V264M332 20V264M452 20V264M572 20V264" fill="none" stroke="#243550" stroke-width="0.8" opacity="0.45"/>
+
+    <g transform="translate(28 34)">
+      <rect class="panel-soft" x="0" y="0" width="152" height="73" rx="9"/>
+      <text class="mono small muted" x="13" y="20">$ swarm compile</text>
+      <text class="sans label" x="13" y="43">goal text</text>
+      <text class="mono small" x="13" y="60" fill="#8bd3dd">--contract-file</text>
+    </g>
+
+    <g transform="translate(48 164)">
+      <path class="contract-fill" d="M0 13C0 5.8 5.8 0 13 0H127C134.2 0 140 5.8 140 13V104C140 111.2 134.2 117 127 117H13C5.8 117 0 111.2 0 104Z"/>
+      <path d="M112 0V28H140" fill="none" stroke="#22d3ee" stroke-width="1.2"/>
+      <text class="mono label" x="14" y="24">contract.yaml</text>
+      <circle cx="18" cy="49" r="3" fill="#34d399"/>
+      <text class="mono small" x="30" y="53">build-must-pass</text>
+      <circle cx="18" cy="70" r="3" fill="#f59e0b"/>
+      <text class="mono small" x="30" y="74">test-must-pass</text>
+      <circle cx="18" cy="91" r="3" fill="#fb7185"/>
+      <text class="mono small" x="30" y="95">predicate-runner</text>
+    </g>
+
+    <path class="wire-hot" d="M180 70C222 70 224 111 257 125"/>
+    <path class="wire-hot" d="M188 221C225 220 226 180 256 166"/>
+
+    <g transform="translate(318 143)">
+      <path class="wire" d="M0 0L-62 -75M0 0L-86 -25M0 0L-78 50M0 0L-16 84M0 0L56 73M0 0L88 8M0 0L63 -63M0 0L-9 -88"/>
+
+      <polygon class="contract" points="-39,-32 39,-32 60,0 39,32 -39,32 -60,0"/>
+      <text class="mono label" x="0" y="-5" text-anchor="middle">tournament</text>
+      <text class="mono small" x="0" y="14" text-anchor="middle" fill="#8bd3dd">8 personas</text>
+
+      <g class="mono small" text-anchor="middle">
+        <circle class="node" cx="-62" cy="-75" r="17"/><circle class="node-core" cx="-62" cy="-75" r="5"/><text x="-62" y="-97">arch</text>
+        <circle class="node" cx="-86" cy="-25" r="17"/><circle class="node-alt" cx="-86" cy="-25" r="5"/><text x="-86" y="-47">impl</text>
+        <circle class="node" cx="-78" cy="50" r="17"/><circle class="node-ok" cx="-78" cy="50" r="5"/><text x="-78" y="79">test</text>
+        <circle class="node" cx="-16" cy="84" r="17"/><circle class="node-core" cx="-16" cy="84" r="5"/><text x="-16" y="113">docs</text>
+        <circle class="node" cx="56" cy="73" r="17"/><circle class="node-alt" cx="56" cy="73" r="5"/><text x="56" y="102">deps</text>
+        <circle class="node" cx="88" cy="8" r="17"/><circle class="node-bad" cx="88" cy="8" r="5"/><text x="88" y="37">sec</text>
+        <circle class="node" cx="63" cy="-63" r="17"/><circle class="node-ok" cx="63" cy="-63" r="5"/><text x="63" y="-85">verify</text>
+        <circle class="node" cx="-9" cy="-88" r="17"/><circle class="node-core" cx="-9" cy="-88" r="5"/><text x="-9" y="-110">migrate</text>
+      </g>
+    </g>
+
+    <g transform="translate(450 77)">
+      <path class="wire-ok" d="M-70 66C-32 66 -14 44 8 25"/>
+      <path class="wire-warn" d="M-70 70C-33 72 -14 87 8 108"/>
+
+      <rect class="panel-soft" x="8" y="0" width="147" height="52" rx="8"/>
+      <text class="mono label" x="23" y="21">candidate.patch</text>
+      <text class="mono small" x="23" y="39" fill="#34d399">accepted by gates</text>
+
+      <rect class="reject" x="8" y="84" width="147" height="48" rx="8"/>
+      <text class="mono label" x="23" y="105">mutant.patch</text>
+      <text class="mono small" x="23" y="122" fill="#fb7185">falsified</text>
+    </g>
+
+    <g transform="translate(594 142)">
+      <circle class="gate" cx="0" cy="0" r="21"/>
+      <path d="M-10 1L-2 9L13 -9" fill="none" stroke="#34d399" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <path class="wire-ok" d="M605 103C627 113 626 132 615 142"/>
+    <path class="wire-ok" d="M594 163C591 207 558 236 526 250"/>
+
+    <g transform="translate(420 250)">
+      <text class="mono small" x="0" y="-12" fill="#9ca9ba">ledger.jsonl</text>
+      <rect class="ledger" x="0" y="0" width="42" height="18" rx="4"/>
+      <path class="wire-ok" d="M42 9H55"/>
+      <rect class="ledger" x="55" y="0" width="42" height="18" rx="4"/>
+      <path class="wire-ok" d="M97 9H110"/>
+      <rect class="ledger" x="110" y="0" width="42" height="18" rx="4"/>
+      <path class="wire-ok" d="M152 9H165"/>
+      <rect class="ledger" x="165" y="0" width="42" height="18" rx="4"/>
+    </g>
+  </g>
+</svg>
