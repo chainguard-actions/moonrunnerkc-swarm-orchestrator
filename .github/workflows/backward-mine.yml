@@ -43,11 +43,13 @@ jobs:
         # Secrets reach the step only through the env block, never via with: or args.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          API_BUDGET: ${{ github.event.inputs.apiBudget || '1500' }}
+          MINE_LIMIT: ${{ github.event.inputs.limit || '50' }}
         run: |
           node dist/scripts/real-prs/mine-backward.js \
-            --api-budget "${{ github.event.inputs.apiBudget || '1500' }}" \
+            --api-budget "$API_BUDGET" \
             --wall-clock-ms 2400000 \
-            --limit "${{ github.event.inputs.limit || '50' }}" \
+            --limit "$MINE_LIMIT" \
             --months 18
       - name: Report the mine result
         run: |

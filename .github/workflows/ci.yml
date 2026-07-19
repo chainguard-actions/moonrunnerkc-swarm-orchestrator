@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -130,6 +133,8 @@ jobs:
 
     - name: Publish test summary
       if: always() && matrix.node-version == 22
+      env:
+        NODE_VERSION: ${{ matrix.node-version }}
       run: |
         PASS_COUNT=$(grep -oP '\d+(?= passing)' test-output.txt || echo '0')
         FAIL_COUNT=$(grep -oP '\d+(?= failing)' test-output.txt || echo '0')
@@ -142,7 +147,7 @@ jobs:
         echo "| Failing | $FAIL_COUNT |" >> $GITHUB_STEP_SUMMARY
         echo "| Pending | $PEND_COUNT |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "Node.js ${{ matrix.node-version }} on ubuntu-latest" >> $GITHUB_STEP_SUMMARY
+        echo "Node.js ${NODE_VERSION} on ubuntu-latest" >> $GITHUB_STEP_SUMMARY
 
     - name: Upload test output
       if: always() && matrix.node-version == 22

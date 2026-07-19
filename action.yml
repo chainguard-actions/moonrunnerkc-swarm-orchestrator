@@ -163,4 +163,4 @@ runs:
   # PR audit (minutes to seconds for consumers). The :11 tag tracks the
   # latest 11.x release; pin a full version or digest for stricter
   # supply-chain guarantees.
-  image: 'docker://ghcr.io/moonrunnerkc/swarm-orchestrator@sha256:ea5d7e6b94c66bc181c74a6596be2231eac243f7dee1d69b80db2c840fa7f05b' # :11
+  image: 'docker://ghcr.io/moonrunnerkc/swarm-orchestrator:11@sha256:ea5d7e6b94c66bc181c74a6596be2231eac243f7dee1d69b80db2c840fa7f05b'

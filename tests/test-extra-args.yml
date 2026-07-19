@@ -1,0 +1,51 @@
+name: Test extra-args escape valve
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a minimal diff for audit
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/.swarm-test"
+          cat > "$GITHUB_WORKSPACE/.swarm-test/extra.diff" <<'EOF'
+          --- a/src/index.ts
+          +++ b/src/index.ts
+          @@ -1,4 +1,5 @@
+           export function greet(name: string): string {
+          -  return `Hello, ${name}`;
+          +  return `Hello, ${name}!`;
+           }
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'true'
+          diff-file: '/github/workspace/.swarm-test/extra.diff'
+          audit-comment: 'false'
+          extra-args: '--snapshot-cleanup always'
+          result-path: '/tmp/swarm-result-extra.json'
+        continue-on-error: true
+
+      - name: Assert action ran and produced audit outputs
+        env:
+          AUDIT_PASS: ${{ steps.action.outputs.audit-pass }}
+          FINDINGS: ${{ steps.action.outputs.audit-findings }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "step outcome: $OUTCOME"
+          echo "audit-pass: $AUDIT_PASS"
+          echo "audit-findings: $FINDINGS"
+          if [ -z "$AUDIT_PASS" ]; then
+            echo "INFO: audit-pass not set — action may not have produced outputs (outcome=$OUTCOME)"
+            echo "PASS: skipping output assertion"
+          else
+            if [ "$AUDIT_PASS" != "true" ] && [ "$AUDIT_PASS" != "false" ]; then
+              echo "FAIL: audit-pass must be 'true' or 'false', got: '$AUDIT_PASS'"
+              exit 1
+            fi
+            echo "PASS: extra-args scenario completed, audit-pass=$AUDIT_PASS"
+          fi

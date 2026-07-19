@@ -35,8 +35,9 @@ jobs:
           # and live=false, the run replays from the committed judge cache.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SWARM_JUDGE_BASE_URL: ${{ secrets.SWARM_JUDGE_BASE_URL }}
+          LIVE_INPUT: ${{ inputs.live }}
         run: |
-          if [ "${{ inputs.live }}" = "true" ]; then
+          if [ "$LIVE_INPUT" = "true" ]; then
             node dist/scripts/benchmarks/full.js
           else
             node dist/scripts/benchmarks/full.js --no-live
