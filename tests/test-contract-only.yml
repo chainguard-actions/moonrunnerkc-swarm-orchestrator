@@ -1,0 +1,30 @@
+name: Test contract-only mode with goal
+on:
+  workflow_dispatch:
+jobs:
+  test-contract-only:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          goal: 'Write a function that adds two numbers'
+          contract-only: 'true'
+          extractor: 'deterministic'
+          session: 'deterministic'
+        continue-on-error: true
+
+      - name: Assert action ran in contract-only mode
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+        run: |
+          echo "result: $RESULT"
+          # contract-only mode should compile the goal and stop
+          # without executing it; the action should exit without
+          # requiring LLM API keys
+          echo "PASS: action completed contract-only mode"

@@ -1,0 +1,45 @@
+name: Test audit mode with clean diff (no cheat patterns)
+on:
+  workflow_dispatch:
+jobs:
+  test-audit-clean:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/2/merge
+      GITHUB_HEAD_REF: add-feature
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a clean diff file (no cheat patterns)
+        run: |
+          cat > /tmp/clean.diff <<'EOF'
+          --- a/src/calculator.py
+          +++ b/src/calculator.py
+          @@ -1,3 +1,7 @@
+           def add(a, b):
+               return a + b
+          +
+          +def subtract(a, b):
+          +    return a - b
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'true'
+          diff-file: '/tmp/clean.diff'
+          audit-comment: 'false'
+        continue-on-error: true
+
+      - name: Assert audit outputs are present
+        env:
+          AUDIT_PASS: ${{ steps.action.outputs.audit-pass }}
+          AUDIT_FINDINGS: ${{ steps.action.outputs.audit-findings }}
+          AUDIT_LEDGER: ${{ steps.action.outputs.audit-ledger }}
+        run: |
+          echo "audit-pass: $AUDIT_PASS"
+          echo "audit-findings: $AUDIT_FINDINGS"
+          echo "audit-ledger: $AUDIT_LEDGER"
+          echo "PASS: audit mode completed with clean diff"

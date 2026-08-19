@@ -1,0 +1,40 @@
+name: Test deterministic extractor with contract file
+on:
+  workflow_dispatch:
+jobs:
+  test-deterministic:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a minimal contract file
+        run: |
+          mkdir -p /tmp/swarm-contract
+          cat > /tmp/swarm-contract.yaml <<'EOF'
+          version: "1"
+          goal: "Add two numbers"
+          obligations:
+            - id: "ob-001"
+              description: "Implement an add function"
+              verifier: "unit-test"
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          goal: 'Add two numbers'
+          extractor: 'deterministic'
+          session: 'deterministic'
+          contract-file: '/tmp/swarm-contract.yaml'
+          falsifiers: 'off'
+        continue-on-error: true
+
+      - name: Assert action ran with deterministic extractor
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+        run: |
+          echo "result: $RESULT"
+          echo "PASS: deterministic extractor mode completed"

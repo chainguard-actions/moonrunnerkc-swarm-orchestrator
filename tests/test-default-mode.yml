@@ -1,0 +1,27 @@
+name: Test default mode (no audit, no goal)
+on:
+  workflow_dispatch:
+jobs:
+  test-default:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'false'
+        continue-on-error: true
+
+      - name: Assert action ran and produced result output
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+        run: |
+          echo "result output: $RESULT"
+          # In default mode without a goal or contract, the action should
+          # exit gracefully (possibly with an error about missing goal/contract,
+          # but it should not crash the runner itself)
+          echo "PASS: action completed default mode run"

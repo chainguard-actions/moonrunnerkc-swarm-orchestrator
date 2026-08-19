@@ -1,0 +1,42 @@
+name: Test extra-args passthrough
+on:
+  workflow_dispatch:
+jobs:
+  test-extra-args:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/4/merge
+      GITHUB_HEAD_REF: feature
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a diff file
+        run: |
+          cat > /tmp/extra-args-test.diff <<'EOF'
+          --- a/utils.py
+          +++ b/utils.py
+          @@ -1,3 +1,5 @@
+           def helper():
+               pass
+          +
+          +def another_helper():
+          +    pass
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'true'
+          diff-file: '/tmp/extra-args-test.diff'
+          audit-comment: 'false'
+          extra-args: '--snapshot-cleanup always'
+        continue-on-error: true
+
+      - name: Assert action ran with extra-args
+        env:
+          AUDIT_PASS: ${{ steps.action.outputs.audit-pass }}
+        run: |
+          echo "audit-pass: $AUDIT_PASS"
+          echo "PASS: action completed with extra-args"

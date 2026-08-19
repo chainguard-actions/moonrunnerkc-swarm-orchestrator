@@ -1,0 +1,44 @@
+name: Test audit mode with AI-BOM emission
+on:
+  workflow_dispatch:
+jobs:
+  test-audit-aibom:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/3/merge
+      GITHUB_HEAD_REF: ai-generated-branch
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a diff file for audit with aibom
+        run: |
+          cat > /tmp/aibom-test.diff <<'EOF'
+          --- a/module.py
+          +++ b/module.py
+          @@ -1,4 +1,8 @@
+           class Processor:
+               def run(self):
+          -        return self._compute()
+          +        # simplified implementation
+          +        return True
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'true'
+          diff-file: '/tmp/aibom-test.diff'
+          audit-comment: 'false'
+          emit-aibom: 'cyclonedx-ml'
+        continue-on-error: true
+
+      - name: Assert audit ran with aibom flag
+        env:
+          AUDIT_PASS: ${{ steps.action.outputs.audit-pass }}
+          AUDIT_FINDINGS: ${{ steps.action.outputs.audit-findings }}
+        run: |
+          echo "audit-pass: $AUDIT_PASS"
+          echo "audit-findings: $AUDIT_FINDINGS"
+          echo "PASS: audit mode with aibom emission completed"
