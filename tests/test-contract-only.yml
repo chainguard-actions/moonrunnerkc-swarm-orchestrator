@@ -1,0 +1,40 @@
+name: Test contract-only mode
+on:
+  workflow_dispatch:
+jobs:
+  test-contract-only:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          goal: 'Write a function that adds two numbers'
+          contract-only: 'true'
+          extractor: 'deterministic'
+          result-path: '/tmp/swarm-result-contract-only.json'
+        continue-on-error: true
+
+      - name: Assert action ran
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "action outcome: $OUTCOME"
+          if [ -z "$OUTCOME" ]; then
+            echo "FAIL: action did not produce an outcome"
+            exit 1
+          fi
+          echo "PASS: action ran with outcome '$OUTCOME'"
+
+      - name: Check for contract artifacts
+        run: |
+          if [ -d .swarm/contracts ]; then
+            echo "PASS: .swarm/contracts directory exists"
+            ls -la .swarm/contracts/ || true
+          else
+            echo "INFO: .swarm/contracts not found (may be expected in deterministic mode without LLM)"
+          fi

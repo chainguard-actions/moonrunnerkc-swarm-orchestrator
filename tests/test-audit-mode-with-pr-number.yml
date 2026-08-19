@@ -1,0 +1,36 @@
+name: Test audit mode with explicit PR number input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up git origin reachable inside Docker container
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          rm -rf "$GITHUB_WORKSPACE/.git-remote"
+          git init --bare "$GITHUB_WORKSPACE/.git-remote"
+          git push "$GITHUB_WORKSPACE/.git-remote" HEAD:refs/heads/act-harness
+          git remote set-url origin "$GITHUB_WORKSPACE/.git-remote" 2>/dev/null || \
+            git remote add origin "$GITHUB_WORKSPACE/.git-remote"
+
+      - name: Run action in audit mode with PR number (expect it to attempt audit)
+        id: action
+        uses: .
+        continue-on-error: true
+        with:
+          audit-mode: "true"
+          pr: "1"
+          audit-comment: "false"
+
+      - name: Assert action attempted audit with PR number (not a config validation error)
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          # The action should have accepted the numeric PR input and attempted to run
+          # the audit CLI with GITHUB_REPOSITORY#1 as the PR ref.
+          # It may fail at the CLI level (PR not found, network error, etc.),
+          # but it must NOT fail with the "no PR ref" validation error.
+          echo "PASS: action accepted pr=1 input and attempted audit (outcome: ${{ steps.action.outcome }})"

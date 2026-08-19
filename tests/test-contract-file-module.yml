@@ -1,4 +1,4 @@
-name: Test external patches inputs
+name: Test contract-file and contract-module inputs
 on:
   workflow_dispatch:
 jobs:
@@ -6,10 +6,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Create patch queue and dir
+      - name: Create a minimal contract file
         run: |
-          mkdir -p /tmp/swarm-patches-dir
-          touch /tmp/swarm-patches-queue.jsonl
+          mkdir -p /tmp/swarm-contract
+          cat > /tmp/swarm-contract/contract.yaml <<'EOF'
+          version: "1"
+          goal: "write a hello world function"
+          obligations: []
+          EOF
       - id: action
         uses: .
         continue-on-error: true
@@ -17,9 +21,9 @@ jobs:
           goal: "write a hello world function"
           extractor: deterministic
           session: deterministic
-          external-patches-queue: "/tmp/swarm-patches-queue.jsonl"
-          external-patches-dir: "/tmp/swarm-patches-dir"
-      - name: Assert action ran (external patches inputs accepted)
+          contract-file: "/tmp/swarm-contract/contract.yaml"
+          contract-module: "/tmp/swarm-contract/contract.js"
+      - name: Assert action ran (contract-file and contract-module inputs accepted)
         run: |
           OUTCOME="${{ steps.action.outcome }}"
           echo "outcome: $OUTCOME"
@@ -27,4 +31,4 @@ jobs:
             echo "FAIL: action step was skipped unexpectedly"
             exit 1
           fi
-          echo "PASS: action accepted external-patches-queue and external-patches-dir inputs and ran"
+          echo "PASS: action accepted contract-file and contract-module inputs and ran"

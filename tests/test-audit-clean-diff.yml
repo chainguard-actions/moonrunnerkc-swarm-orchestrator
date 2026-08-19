@@ -1,0 +1,64 @@
+name: Test audit mode with clean diff (no cheat patterns)
+on:
+  workflow_dispatch:
+jobs:
+  test-audit-clean:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/2/merge
+      GITHUB_HEAD_REF: feature-clean
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a clean diff file (no cheat patterns)
+        run: |
+          mkdir -p /tmp/swarm-test-clean
+          cat > /tmp/swarm-test-clean/clean.diff <<'EOF'
+          --- a/src/math.ts
+          +++ b/src/math.ts
+          @@ -1,4 +1,8 @@
+           export function add(a: number, b: number): number {
+          -  return 0;
+          +  return a + b;
+           }
+          +
+          +export function subtract(a: number, b: number): number {
+          +  return a - b;
+          +}
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'true'
+          diff-file: '/tmp/swarm-test-clean/clean.diff'
+          audit-comment: 'false'
+          result-path: '/tmp/swarm-result-clean.json'
+        continue-on-error: true
+
+      - name: Assert action ran
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "action outcome: $OUTCOME"
+          if [ -z "$OUTCOME" ]; then
+            echo "FAIL: action did not produce an outcome"
+            exit 1
+          fi
+          echo "PASS: action ran with outcome '$OUTCOME'"
+
+      - name: Report audit outputs if available
+        env:
+          AUDIT_PASS: ${{ steps.action.outputs.audit-pass }}
+          AUDIT_FINDINGS: ${{ steps.action.outputs.audit-findings }}
+        run: |
+          echo "audit-pass: $AUDIT_PASS"
+          echo "audit-findings: $AUDIT_FINDINGS"
+          if [ -f /tmp/swarm-result-clean.json ]; then
+            echo "PASS: result file written to custom path"
+            cat /tmp/swarm-result-clean.json
+          else
+            echo "INFO: result file not present (may be expected without full swarm runtime)"
+          fi

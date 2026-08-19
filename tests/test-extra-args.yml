@@ -1,0 +1,45 @@
+name: Test extra-args passthrough
+on:
+  workflow_dispatch:
+jobs:
+  test-extra-args:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a diff file for audit
+        run: |
+          mkdir -p /tmp/swarm-extra-args
+          cat > /tmp/swarm-extra-args/test.diff <<'EOF'
+          --- a/src/utils.ts
+          +++ b/src/utils.ts
+          @@ -1,3 +1,3 @@
+           export function noop() {
+          -  return undefined;
+          +  return null;
+           }
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'true'
+          diff-file: '/tmp/swarm-extra-args/test.diff'
+          audit-comment: 'false'
+          extra-args: '--snapshot-cleanup always'
+          result-path: '/tmp/swarm-result-extra-args.json'
+        continue-on-error: true
+
+      - name: Assert action ran with extra-args
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "action outcome: $OUTCOME"
+          if [ -z "$OUTCOME" ]; then
+            echo "FAIL: action did not produce an outcome"
+            exit 1
+          fi
+          echo "PASS: action ran with extra-args, outcome '$OUTCOME'"

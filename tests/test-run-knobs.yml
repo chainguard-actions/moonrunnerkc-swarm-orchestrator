@@ -1,4 +1,4 @@
-name: Test external patches inputs
+name: Test run knob inputs
 on:
   workflow_dispatch:
 jobs:
@@ -6,10 +6,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Create patch queue and dir
-        run: |
-          mkdir -p /tmp/swarm-patches-dir
-          touch /tmp/swarm-patches-queue.jsonl
       - id: action
         uses: .
         continue-on-error: true
@@ -17,9 +13,12 @@ jobs:
           goal: "write a hello world function"
           extractor: deterministic
           session: deterministic
-          external-patches-queue: "/tmp/swarm-patches-queue.jsonl"
-          external-patches-dir: "/tmp/swarm-patches-dir"
-      - name: Assert action ran (external patches inputs accepted)
+          mode: tournament
+          candidates: "2"
+          max-obligations: "5"
+          cost-cap: "1000"
+          falsifiers: "off"
+      - name: Assert action ran (run knob inputs accepted)
         run: |
           OUTCOME="${{ steps.action.outcome }}"
           echo "outcome: $OUTCOME"
@@ -27,4 +26,4 @@ jobs:
             echo "FAIL: action step was skipped unexpectedly"
             exit 1
           fi
-          echo "PASS: action accepted external-patches-queue and external-patches-dir inputs and ran"
+          echo "PASS: action accepted run knob inputs and ran"

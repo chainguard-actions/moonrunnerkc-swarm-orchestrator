@@ -1,0 +1,43 @@
+name: Test deterministic goal execution
+on:
+  workflow_dispatch:
+jobs:
+  test-deterministic-goal:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          goal: 'Return the string hello from a function named greet'
+          extractor: 'deterministic'
+          session: 'deterministic'
+          result-path: '/tmp/swarm-result-deterministic.json'
+        continue-on-error: true
+
+      - name: Assert action ran
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "action outcome: $OUTCOME"
+          if [ -z "$OUTCOME" ]; then
+            echo "FAIL: action did not produce an outcome"
+            exit 1
+          fi
+          echo "PASS: action ran with outcome '$OUTCOME'"
+
+      - name: Report result output if available
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+        run: |
+          echo "result output present: $([ -n "$RESULT" ] && echo yes || echo no)"
+          if [ -f /tmp/swarm-result-deterministic.json ]; then
+            echo "INFO: result file exists"
+            cat /tmp/swarm-result-deterministic.json
+          else
+            echo "INFO: result file not found (may be expected in deterministic mode without LLM)"
+          fi
