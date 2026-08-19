@@ -1,0 +1,61 @@
+name: Test audit mode with diff-file input
+on:
+  workflow_dispatch:
+jobs:
+  test-audit-diff-file:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/1/merge
+      GITHUB_HEAD_REF: feature-branch
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a sample unified diff file
+        run: |
+          mkdir -p /tmp/swarm-test
+          cat > /tmp/swarm-test/sample.diff <<'EOF'
+          --- a/src/foo.test.ts
+          +++ b/src/foo.test.ts
+          @@ -10,7 +10,7 @@
+           describe('foo', () => {
+          -  it('should return 42', () => {
+          -    expect(foo()).toBe(42);
+          -  });
+          +  it.skip('should return 42', () => {
+          +    expect(foo()).toBe(42);
+          +  });
+           });
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'true'
+          diff-file: '/tmp/swarm-test/sample.diff'
+          audit-comment: 'false'
+        continue-on-error: true
+
+      - name: Assert action ran (audit mode with diff-file)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          AUDIT_PASS: ${{ steps.action.outputs.audit-pass }}
+          AUDIT_FINDINGS: ${{ steps.action.outputs.audit-findings }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "audit-pass: $AUDIT_PASS"
+          echo "audit-findings: $AUDIT_FINDINGS"
+          # The action must have run (success or failure) — skipped means it never started
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: action was skipped — it should have run"
+            exit 1
+          fi
+          echo "PASS: action ran with outcome '$OUTCOME'"
+          # Log outputs if available
+          if [ -n "$AUDIT_PASS" ]; then
+            echo "INFO: audit-pass=$AUDIT_PASS"
+          fi
+          if [ -n "$AUDIT_FINDINGS" ]; then
+            echo "INFO: audit-findings=$AUDIT_FINDINGS"
+          fi

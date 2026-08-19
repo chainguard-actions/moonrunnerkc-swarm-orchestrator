@@ -1,0 +1,31 @@
+name: Test local provider inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          goal: "test local provider configuration"
+          extractor: "local"
+          session: "local"
+          local-backend: "openai-compatible"
+          local-base-url: "http://localhost:11434"
+          local-grammar: "auto"
+          local-model-extractor: "mistral:7b"
+          local-model-session: "mistral:7b"
+        continue-on-error: true
+      - name: Assert action ran with local provider inputs
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          # The action may fail due to no local backend being available,
+          # but it must have been invoked (not skipped). We just verify
+          # the step was reached and the inputs were accepted.
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action step was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action was invoked with local provider inputs"

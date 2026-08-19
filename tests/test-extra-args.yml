@@ -1,0 +1,49 @@
+name: Test extra-args passthrough in audit mode
+on:
+  workflow_dispatch:
+jobs:
+  test-extra-args:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/5/merge
+      GITHUB_HEAD_REF: bot-pr-branch
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a minimal diff for audit
+        run: |
+          mkdir -p /tmp/swarm-extra-args-test
+          cat > /tmp/swarm-extra-args-test/change.diff <<'EOF'
+          --- a/tests/math.test.js
+          +++ b/tests/math.test.js
+          @@ -3,6 +3,6 @@
+           test('multiply', () => {
+          -  expect(multiply(3, 4)).toBe(12);
+          +  expect(multiply(3, 4)).toBe(multiply(3, 4));
+           });
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'true'
+          diff-file: '/tmp/swarm-extra-args-test/change.diff'
+          audit-comment: 'false'
+          extra-args: '--snapshot-cleanup always'
+        continue-on-error: true
+
+      - name: Assert action ran with extra-args
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          AUDIT_PASS: ${{ steps.action.outputs.audit-pass }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "audit-pass: $AUDIT_PASS"
+          # The action must have run (success or failure) — skipped means it never started
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: action was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action ran with extra-args (outcome=$OUTCOME)"

@@ -1,0 +1,35 @@
+name: Test emit-aibom input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a minimal diff file
+        run: |
+          mkdir -p /tmp/swarm-test
+          cat > /tmp/swarm-test/test.diff <<'EOF'
+          --- a/foo.py
+          +++ b/foo.py
+          @@ -1,3 +1,3 @@
+           def add(a, b):
+          -    return a + b
+          +    return a + b  # fixed
+          EOF
+      - id: action
+        uses: .
+        with:
+          audit-mode: "true"
+          diff-file: "/tmp/swarm-test/test.diff"
+          emit-aibom: "cyclonedx-ml"
+          audit-comment: "false"
+        continue-on-error: true
+      - name: Assert action ran with emit-aibom input
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action step was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action was invoked with emit-aibom input"

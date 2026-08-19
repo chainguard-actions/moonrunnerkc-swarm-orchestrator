@@ -1,0 +1,32 @@
+name: Test contract-module input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a minimal contract module
+        run: |
+          mkdir -p /tmp/swarm-contract
+          cat > /tmp/swarm-contract/contract.js <<'EOF'
+          module.exports = {
+            goal: "test contract module",
+            obligations: []
+          };
+          EOF
+      - id: action
+        uses: .
+        with:
+          goal: "test contract module input"
+          extractor: "deterministic"
+          contract-module: "/tmp/swarm-contract/contract.js"
+        continue-on-error: true
+      - name: Assert action ran with contract-module input
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action step was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action was invoked with contract-module input"

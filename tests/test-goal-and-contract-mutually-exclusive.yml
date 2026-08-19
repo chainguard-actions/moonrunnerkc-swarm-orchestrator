@@ -1,0 +1,27 @@
+name: Test goal and contract-path are mutually exclusive
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action with both goal and contract-path (expect failure)
+        id: action
+        uses: .
+        continue-on-error: true
+        with:
+          audit-mode: 'false'
+          goal: 'Write a hello world function'
+          contract-path: '/tmp/some-contract'
+
+      - name: Assert action failed due to mutual exclusion
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" != "failure" ]; then
+            echo "FAIL: expected action to fail when both goal and contract-path are provided"
+            exit 1
+          fi
+          echo "PASS: action correctly rejected goal + contract-path combination"

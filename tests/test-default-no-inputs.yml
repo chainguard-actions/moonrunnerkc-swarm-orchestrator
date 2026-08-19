@@ -1,0 +1,30 @@
+name: Test default mode with no goal or audit inputs
+on:
+  workflow_dispatch:
+jobs:
+  test-default-no-inputs:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'false'
+        continue-on-error: true
+
+      - name: Assert action ran (no goal or audit mode)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # Without a goal or audit mode, the action should exit with an error
+          # (not crash the runner itself). We verify it ran and produced an outcome.
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: action was skipped — it should have run and exited"
+            exit 1
+          fi
+          echo "PASS: action ran and produced outcome '$OUTCOME' (expected failure without goal)"

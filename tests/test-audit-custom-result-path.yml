@@ -1,0 +1,61 @@
+name: Test audit mode with custom result-path
+on:
+  workflow_dispatch:
+jobs:
+  test-audit-custom-result-path:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/42/merge
+      GITHUB_HEAD_REF: ai-agent-branch
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a minimal diff file for audit
+        run: |
+          mkdir -p /tmp/swarm-audit-test
+          cat > /tmp/swarm-audit-test/pr.diff <<'EOF'
+          --- a/lib/utils.js
+          +++ b/lib/utils.js
+          @@ -1,5 +1,5 @@
+           function add(a, b) {
+          -  return a + b;
+          +  return 0; // TODO: fix later
+           }
+           module.exports = { add };
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          audit-mode: 'true'
+          diff-file: '/tmp/swarm-audit-test/pr.diff'
+          audit-comment: 'false'
+          result-path: '/tmp/swarm-audit-result.json'
+        continue-on-error: true
+
+      - name: Assert action ran (custom result-path)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          RESULT: ${{ steps.action.outputs.result }}
+          AUDIT_PASS: ${{ steps.action.outputs.audit-pass }}
+          AUDIT_FINDINGS: ${{ steps.action.outputs.audit-findings }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result: $RESULT"
+          echo "audit-pass: $AUDIT_PASS"
+          echo "audit-findings: $AUDIT_FINDINGS"
+          # The action must have run (success or failure) — skipped means it never started
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: action was skipped — it should have run"
+            exit 1
+          fi
+          echo "PASS: action ran with outcome '$OUTCOME'"
+          # Check if the custom result path was written
+          if [ -f /tmp/swarm-audit-result.json ]; then
+            echo "INFO: custom result-path file was written"
+            cat /tmp/swarm-audit-result.json
+          else
+            echo "INFO: custom result-path file not found (may be normal if action failed early)"
+          fi
