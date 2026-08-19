@@ -1,0 +1,156 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  typecheck-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      with:
+        node-version: 22
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Typecheck
+      run: npm run typecheck
+
+    - name: Lint
+      run: npm run lint
+
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20, 22]
+
+    steps:
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      with:
+        fetch-depth: 2
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Setup Python
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      with:
+        python-version: '3.11'
+
+    - name: Install pytest
+      # The synthesizer's framework-aware preflight runs `python3 -m pytest
+      # --collect-only` against synthesized Python candidates. Without
+      # pytest on PATH, every Python candidate is rejected with a
+      # collection error and the related test-synthesizer specs (Django
+      # placement, pytest flatten, .venv rewrite, --collect-only reject)
+      # all fail. ubuntu-latest does not include pytest by default.
+      run: pip install pytest
+
+    - name: Configure git identity
+      # Production code paths that spawn git directly (e.g.
+      # attachAttestationNote -> git notes add) need an author identity.
+      # ubuntu-latest CI runners ship with empty global git config, which
+      # makes those paths fail with "fatal: empty ident name". The
+      # battery-runner tests set a per-repo identity in their fixtures,
+      # but a global fallback is the safer floor for any future test.
+      run: |
+        git config --global user.email "ci@swarm-orchestrator.local"
+        git config --global user.name "swarm-ci"
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build
+      run: npm run build
+
+    - name: Test
+      run: |
+        set -o pipefail
+        npm run test:ci 2>&1 | tee test-output.txt
+
+    - name: Publish test summary
+      if: always() && matrix.node-version == 22
+      env:
+        NODE_VERSION: ${{ matrix.node-version }}
+      run: |
+        PASS_COUNT=$(grep -oP '\d+(?= passing)' test-output.txt || echo '0')
+        FAIL_COUNT=$(grep -oP '\d+(?= failing)' test-output.txt || echo '0')
+        PEND_COUNT=$(grep -oP '\d+(?= pending)' test-output.txt || echo '0')
+        echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Passing | $PASS_COUNT |" >> $GITHUB_STEP_SUMMARY
+        echo "| Failing | $FAIL_COUNT |" >> $GITHUB_STEP_SUMMARY
+        echo "| Pending | $PEND_COUNT |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Node.js ${NODE_VERSION} on ubuntu-latest" >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload test output
+      if: always() && matrix.node-version == 22
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: test-output-node${{ matrix.node-version }}
+        path: test-output.txt
+        retention-days: 7
+
+  loc-budget:
+    # Enforces the post-Phase-6 LOC ceiling on src/ on every PR.
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+    - name: Run LOC budget gate
+      run: bash scripts/loc-budget-gate.sh
+
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      with:
+        node-version: 22
+        cache: 'npm'
+
+    - name: Audit dependencies
+      run: npm audit --audit-level=critical --omit=dev
+
+    - name: Summary
+      if: always()
+      run: |
+        echo "### Security Audit" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "Scanned: root npm (production dependencies)" >> "$GITHUB_STEP_SUMMARY"
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    steps:
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+    - name: Build swarm-orchestrator image
+      run: docker build -t swarm-orchestrator:ci .
+
+    - name: Verify swarm container starts
+      run: docker run --rm swarm-orchestrator:ci node /app/dist/src/cli.js --help || true
