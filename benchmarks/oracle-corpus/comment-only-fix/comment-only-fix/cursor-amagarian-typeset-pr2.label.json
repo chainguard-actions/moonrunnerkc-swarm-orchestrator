@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "scripts/form-feedback-loop.ts",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/amagarian/typeset/pull/2",
+  "prTitle": "Add form accuracy feedback loop",
+  "sha256": "31b0c4723e3501b887b29f3f51de594648dc02aaba02cac0fb930338be044080"
+}

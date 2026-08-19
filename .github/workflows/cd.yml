@@ -1,0 +1,190 @@
+name: CD
+
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag override (default: git sha)'
+        required: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OWNER }}/swarm-orchestrator
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Build and push
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  npm-publish:
+    # Keeps the npm registry in step with tagged releases (it sat at
+    # 7.0.0-alpha.0 while the repo shipped 11.x). Publishes only on v* tags,
+    # only when the tag matches package.json, and only when NPM_TOKEN is
+    # configured; otherwise the job explains what to do and succeeds so CD
+    # for the image is never blocked on npm credentials.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Check tag matches package.json version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "tag v$TAG does not match package.json $PKG; refusing to publish" >&2
+            exit 1
+          fi
+
+      - name: Publish to npm
+        if: env.NODE_AUTH_TOKEN != ''
+        # prepublishOnly runs the full build + test suite before the tarball
+        # is created, so a broken tree cannot reach the registry. Idempotent:
+        # if this exact version is already on the registry (a re-run after a
+        # later step failed), skip the publish instead of failing on a
+        # republish conflict, so the SBOM steps below can still complete.
+        #
+        # A publish that the registry itself rejects (for example a 404 on PUT
+        # when the configured NPM_TOKEN does not own the `swarm-orchestrator`
+        # name) is surfaced as a warning, not a hard failure. The Docker image,
+        # the GitHub Release, and the provenance are the release deliverables;
+        # npm is best-effort, so a registry/ownership problem must not red the
+        # whole release CD. Resolve it by claiming the name on npm, publishing
+        # under a scope, or removing this job. A broken tarball still fails hard
+        # (prepublishOnly runs the suite before the network call).
+        run: |
+          npm ci
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          if npm view "swarm-orchestrator@${PKG_VERSION}" version >/dev/null 2>&1; then
+            echo "swarm-orchestrator@${PKG_VERSION} is already published; skipping npm publish"
+          elif npm publish --provenance --access public; then
+            echo "published swarm-orchestrator@${PKG_VERSION} to the npm registry"
+          else
+            echo "::warning title=npm publish failed::Could not publish swarm-orchestrator@${PKG_VERSION} to the npm registry. The configured NPM_TOKEN likely does not own the 'swarm-orchestrator' name (the registry returns 404 on PUT). The Docker image, GitHub Release, and provenance are unaffected. Fix by claiming the name on npm, publishing under a scope, or removing the npm-publish job."
+          fi
+
+      - name: Ensure the GitHub Release exists
+        if: env.NODE_AUTH_TOKEN != '' && startsWith(github.ref, 'refs/tags/v')
+        # Pushing a tag does not create a Release object, and the SBOM upload
+        # below targets one. Create it (notes from the tag) if it is missing,
+        # so a tag-triggered run is self-contained and re-runnable.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" \
+              --title "$GITHUB_REF_NAME" \
+              --notes "Release $GITHUB_REF_NAME. See CHANGELOG.md."
+          fi
+
+      - name: Generate CycloneDX SBOM
+        if: env.NODE_AUTH_TOKEN != ''
+        # Publishes a CycloneDX 1.6 software bill of materials alongside
+        # the tagged release so consumers can verify dependency provenance.
+        # Aligns the package's own provenance posture with the AI-BOM the
+        # tool generates for its audit targets (OWASP A03:2025 supply
+        # chain failures, L4 of the security review).
+        run: |
+          npx --yes @cyclonedx/cyclonedx-npm \
+            --output-format JSON \
+            --output-file swarm-orchestrator-sbom.cdx.json
+          ls -l swarm-orchestrator-sbom.cdx.json
+
+      - name: Attach SBOM to GitHub Release
+        if: env.NODE_AUTH_TOKEN != '' && startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" \
+            swarm-orchestrator-sbom.cdx.json \
+            --clobber
+
+      - name: Skipped (no NPM_TOKEN)
+        if: env.NODE_AUTH_TOKEN == ''
+        run: |
+          echo "NPM_TOKEN secret is not configured; npm publish skipped." >> "$GITHUB_STEP_SUMMARY"
+          echo "Add it at Settings > Secrets and variables > Actions to enable registry releases." >> "$GITHUB_STEP_SUMMARY"
+
+  verify:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify swarm-orchestrator image
+        run: |
+          docker pull ${{ env.REGISTRY }}/${{ env.OWNER }}/swarm-orchestrator:sha-${GITHUB_SHA::7}
+          # Override the image's ENTRYPOINT (entrypoint.sh) so the smoke test
+          # invokes the CLI directly. entrypoint.sh is the GitHub-Action wrapper
+          # that requires INPUT_GOAL / INPUT_PLAN / INPUT_RECIPE env vars and
+          # ignores trailing argv, without --entrypoint, `node cli.js --help`
+          # gets dropped and the wrapper errors out for missing INPUT_*.
+          docker run --rm --entrypoint node ${{ env.REGISTRY }}/${{ env.OWNER }}/swarm-orchestrator:sha-${GITHUB_SHA::7} /app/dist/src/cli.js --help
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### CD - Image Verification" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image | Tag |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|-----|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| swarm-orchestrator | sha-${GITHUB_SHA::7} |" >> "$GITHUB_STEP_SUMMARY"

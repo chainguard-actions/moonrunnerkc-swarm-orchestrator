@@ -1,0 +1,11 @@
+{
+  "category": "no-op-fix",
+  "injectorId": "no-op-fix",
+  "file": "internal/domain/ai/errors_phase9.go",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 3,
+  "sourcePrUrl": "https://github.com/divord97/ccc/pull/11",
+  "prTitle": "Phase 9: AI + Intelligent Features (DDD/TDD)",
+  "sha256": "6f4de867f1b5855e3ab088ed1d1804e7e7afb85723ea01f59b4612c0b47ae495"
+}

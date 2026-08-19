@@ -1,0 +1,12 @@
+{
+  "category": "goal-not-fixed",
+  "injectorId": "goal-not-fixed",
+  "file": "client/src/features/set/editSet/injected_goal_cursor_birdwell_trading_cards_pr8_goal_not_fixed.ts",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/birdwell/trading-cards/pull/8",
+  "prTitle": "Fix first_cursor_birdwell_trading_cards_pr8_goal_not_fixed: return a safe default instead of crashing on empty input",
+  "claim": "Fix first_cursor_birdwell_trading_cards_pr8_goal_not_fixed: return a safe default instead of crashing on empty input",
+  "sha256": "f790f47aef7d2732aa9faf9bc2a3768064f8564531cba11a8efb25fe4c9fe015"
+}

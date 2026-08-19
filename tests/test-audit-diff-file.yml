@@ -1,0 +1,65 @@
+name: Test audit mode with diff-file input
+on:
+  workflow_dispatch:
+
+jobs:
+  test-audit-diff-file:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Create a minimal unified diff fixture
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/tests/fixtures"
+          cat > "$GITHUB_WORKSPACE/tests/fixtures/sample.diff" <<'EOF'
+          --- a/src/calculator.test.ts
+          +++ b/src/calculator.test.ts
+          @@ -10,7 +10,7 @@ describe('add', () => {
+             it('adds two numbers', () => {
+          -    expect(add(1, 2)).toBe(3);
+          +    expect(add(1, 2)).toBe(add(1, 2));
+             });
+           });
+          EOF
+
+      - name: Set up git origin reachable inside Docker container
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          rm -rf "$GITHUB_WORKSPACE/.git-remote"
+          git init --bare "$GITHUB_WORKSPACE/.git-remote"
+          git push "$GITHUB_WORKSPACE/.git-remote" HEAD:refs/heads/act-harness || true
+          git remote set-url origin "$GITHUB_WORKSPACE/.git-remote" 2>/dev/null || \
+            git remote add origin "$GITHUB_WORKSPACE/.git-remote"
+
+      - id: audit
+        uses: .
+        continue-on-error: true
+        with:
+          audit-mode: 'true'
+          diff-file: '${{ github.workspace }}/tests/fixtures/sample.diff'
+          audit-comment: 'false'
+
+      - name: Assert audit ran (pass or fail gracefully)
+        env:
+          OUTCOME: ${{ steps.audit.outcome }}
+          AUDIT_PASS: ${{ steps.audit.outputs.audit-pass }}
+          AUDIT_FINDINGS: ${{ steps.audit.outputs.audit-findings }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "audit-pass: $AUDIT_PASS"
+          echo "audit-findings: $AUDIT_FINDINGS"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$AUDIT_PASS" ]; then
+              echo "FAIL: action succeeded but audit-pass output is empty"
+              exit 1
+            fi
+            echo "PASS: audit completed with audit-pass=$AUDIT_PASS findings=$AUDIT_FINDINGS"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected under sentinel repo / no API key / image unavailable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

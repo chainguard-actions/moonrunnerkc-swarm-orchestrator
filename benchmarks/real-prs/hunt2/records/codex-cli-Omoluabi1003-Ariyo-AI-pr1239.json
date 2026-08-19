@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-06-13T04:49:17.422Z",
+  "id": "codex-cli-Omoluabi1003-Ariyo-AI-pr1239",
+  "repo": "Omoluabi1003/Ariyo-AI",
+  "prNumber": 1239,
+  "url": "https://github.com/Omoluabi1003/Ariyo-AI/pull/1239",
+  "headSha": "b9120a415523a61ae31380eefa60e56265a84e65",
+  "vendor": "codex-cli",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "error-swallow",
+      "file": "scripts/ui.js",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "scripts/i18n.js",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "scripts/ui.js",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "scripts/ui.js",
+      "line": 3,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:error-swallow|no-op-fix|coverage-erosion"
+  ]
+}

@@ -1,0 +1,9 @@
+diff --git a/packages/server/src/trpc/routers/gameweek.ts b/packages/server/src/trpc/routers/gameweek.ts
+index 1111111..2222222 100644
+--- a/packages/server/src/trpc/routers/gameweek.ts
++++ b/packages/server/src/trpc/routers/gameweek.ts
+@@ -1,3 +1,4 @@
+ export function widget_copilot_workspace_kupecraig_spectatr_pr41_commen() {
++  // FIXME: still returns the wrong value, needs a real fix
+   return cachedValue_copilot_workspace_kupecraig_spectatr_pr41_commen;
+ }

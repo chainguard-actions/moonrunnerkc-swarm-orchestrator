@@ -1,0 +1,99 @@
+{
+  "generatedAt": "2026-06-12T21:29:46.761Z",
+  "computedBy": "scripts/gate/run-trigger-calibration.ts",
+  "corpus": {
+    "regressionPrs": 72,
+    "regressionEgRuns": 70,
+    "cleanPrs": 232,
+    "cleanEgRuns": 22,
+    "note": "Trigger firings replayed from committed execution-grounded results, structural audit findings, and restoration-proof.json (for test-tamper-proven). Revert/hotfix ground truth from the regression-corpus proofs. Triggers that need an execution-grounded run can only fire on the PRs that have one."
+  },
+  "rows": [
+    {
+      "trigger": "claim-falsified",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": []
+    },
+    {
+      "trigger": "corroborated-under-constraint",
+      "firingCount": 4,
+      "truePositive": 4,
+      "falsePositive": 0,
+      "precision": 1,
+      "wilsonLowerBound": 0.5100999795960008,
+      "truePositivePrs": [
+        "expo/expo#35036",
+        "expo/expo#38074",
+        "expo/expo#39603",
+        "tldraw/tldraw#7880"
+      ]
+    },
+    {
+      "trigger": "obligation-failure",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": []
+    },
+    {
+      "trigger": "test-tamper-proven",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": []
+    },
+    {
+      "trigger": "mock-mutation-proven",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": []
+    },
+    {
+      "trigger": "no-op-fix-proven",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": []
+    },
+    {
+      "trigger": "type-suppression-proven",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": []
+    },
+    {
+      "trigger": "fake-refactor-proven",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": []
+    },
+    {
+      "trigger": "dead-branch-proven",
+      "firingCount": 0,
+      "truePositive": 0,
+      "falsePositive": 0,
+      "precision": 0,
+      "wilsonLowerBound": 0,
+      "truePositivePrs": []
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "src/chat/reef/widget-fence-lint.ts",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/DukkyGames/Minnow/pull/60",
+  "prTitle": "Harden Reef chart widgets with lint, check tool, and silent repair",
+  "sha256": "76334b7a33a6db9bedbc975532c8895ac90ae73ef3cd97ad5e25b61dd97bed06"
+}

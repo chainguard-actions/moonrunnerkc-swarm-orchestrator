@@ -1,0 +1,11 @@
+{
+  "category": "no-op-fix",
+  "injectorId": "no-op-fix",
+  "file": "proyecto/validar_proyecto.py",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 3,
+  "sourcePrUrl": "https://github.com/Alexendros/plantillas/pull/1",
+  "prTitle": "ci(workflows): refactorizar CI/CD con DRY, fixes de seguridad y nueva automatización",
+  "sha256": "44bbd33a5b9b6a2bc02ed1193e70d12798cb8dd833c79cd540ab6da3d4b54c5d"
+}

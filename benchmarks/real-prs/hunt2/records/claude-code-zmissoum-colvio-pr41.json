@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-06-13T04:16:45.290Z",
+  "id": "claude-code-zmissoum-colvio-pr41",
+  "repo": "zmissoum/colvio",
+  "prNumber": 41,
+  "url": "https://github.com/zmissoum/colvio/pull/41",
+  "headSha": "b100a66572ab0f4c40de9aa1997dbd4fa59c4636",
+  "vendor": "claude-code",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "no-op-fix",
+      "file": "docs/generators/diagrams.py",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "docs/generators/gen-security.js",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "docs/generators/gen-spec.js",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "docs/generators/gen-training.js",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "docs/generators/gen-walkthrough.js",
+      "line": 1,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:no-op-fix"
+  ]
+}

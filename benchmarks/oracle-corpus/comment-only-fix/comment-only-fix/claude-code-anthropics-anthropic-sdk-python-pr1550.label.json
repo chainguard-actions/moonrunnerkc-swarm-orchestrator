@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "src/anthropic/_streaming.py",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/anthropics/anthropic-sdk-python/pull/1550",
+  "prTitle": "Wrap mid-stream httpx.TransportError as APIConnectionError",
+  "sha256": "7613cec9e70bb1c9acd2cfd7dd9c9bfbf083f818111aa05b8f0b0c766fedae76"
+}

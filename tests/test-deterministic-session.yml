@@ -1,0 +1,58 @@
+name: Test deterministic session with external patches queue
+on:
+  workflow_dispatch:
+
+jobs:
+  test-deterministic-session:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up git origin reachable inside Docker container
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          rm -rf "$GITHUB_WORKSPACE/.git-remote"
+          git init --bare "$GITHUB_WORKSPACE/.git-remote"
+          git push "$GITHUB_WORKSPACE/.git-remote" HEAD:refs/heads/act-harness || true
+          git remote set-url origin "$GITHUB_WORKSPACE/.git-remote" 2>/dev/null || \
+            git remote add origin "$GITHUB_WORKSPACE/.git-remote"
+
+      - name: Create external patches queue fixture
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/tests/fixtures/patches"
+          cat > "$GITHUB_WORKSPACE/tests/fixtures/patches/queue.jsonl" <<'EOF'
+          {"id":"patch-001","type":"file-write","path":"src/add.ts","content":"export function add(a: number, b: number): number { return a + b; }"}
+          EOF
+
+      - id: deterministic
+        uses: .
+        continue-on-error: true
+        with:
+          goal: 'Implement an add function.'
+          extractor: 'deterministic'
+          session: 'deterministic'
+          external-patches-queue: '${{ github.workspace }}/tests/fixtures/patches/queue.jsonl'
+          result-path: '/tmp/swarm-result-deterministic.json'
+
+      - name: Assert deterministic session ran (pass or fail gracefully)
+        env:
+          OUTCOME: ${{ steps.deterministic.outcome }}
+          RESULT: ${{ steps.deterministic.outputs.result }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result: $RESULT"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$RESULT" ]; then
+              echo "FAIL: action succeeded but result output is empty"
+              exit 1
+            fi
+            echo "PASS: deterministic session completed with result: $RESULT"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected without full environment)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

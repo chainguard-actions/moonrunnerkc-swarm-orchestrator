@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "src/components/AccountsView.jsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/Freedomfarms/Forward-Freedom-Main/pull/21",
+  "prTitle": "Accounts: overflow menu for edit/remove (less clutter)",
+  "sha256": "65de0cd010142d52a0d36891f53cf58f03129b67652f161db3b987511913521e"
+}

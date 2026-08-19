@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "src/components/AccountsView.jsx",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/Freedomfarms/Forward-Freedom-Main/pull/21",
+  "prTitle": "Accounts: overflow menu for edit/remove (less clutter)",
+  "sha256": "5ab88811afd770f8fb415e41577149040a2c97655fb25c034e6de530cde94476"
+}

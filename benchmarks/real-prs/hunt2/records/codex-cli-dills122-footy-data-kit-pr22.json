@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-06-13T04:49:46.075Z",
+  "id": "codex-cli-dills122-footy-data-kit-pr22",
+  "repo": "dills122/footy-data-kit",
+  "prNumber": 22,
+  "url": "https://github.com/dills122/footy-data-kit/pull/22",
+  "headSha": "a999367267b62546d46a1c557095b458b0ea5a6c",
+  "vendor": "codex-cli",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "no-op-fix",
+      "file": "wikipedia/__integration_tests__/wikipedia.integration.test.js",
+      "line": 1,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [
+    "no mutable source lines in diff"
+  ],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:no-op-fix"
+  ]
+}

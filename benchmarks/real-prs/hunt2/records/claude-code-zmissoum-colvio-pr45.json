@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-06-13T04:16:19.680Z",
+  "id": "claude-code-zmissoum-colvio-pr45",
+  "repo": "zmissoum/colvio",
+  "prNumber": 45,
+  "url": "https://github.com/zmissoum/colvio/pull/45",
+  "headSha": "95256f19bb50a22f0be30a213c742cb199c18ca3",
+  "vendor": "claude-code",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "no-op-fix",
+      "file": "content.js",
+      "line": 1,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:no-op-fix"
+  ]
+}

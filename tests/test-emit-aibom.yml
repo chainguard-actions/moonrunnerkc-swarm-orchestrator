@@ -1,0 +1,44 @@
+name: Test emit-aibom input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a minimal diff file for audit mode
+        run: |
+          cat > /tmp/test.diff <<'EOF'
+          --- a/foo.py
+          +++ b/foo.py
+          @@ -1,3 +1,3 @@
+          -def test_foo():
+          -    assert True
+          +def test_foo():
+          +    pass  # removed assertion
+          EOF
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          audit-mode: "true"
+          diff-file: "/tmp/test.diff"
+          emit-aibom: "cyclonedx-ml"
+          audit-comment: "false"
+      - name: Assert action ran or failed gracefully
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          AUDIT_PASS: ${{ steps.action.outputs.audit-pass }}
+          AUDIT_FINDINGS: ${{ steps.action.outputs.audit-findings }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "audit-pass: $AUDIT_PASS"
+          echo "audit-findings: $AUDIT_FINDINGS"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected under harness)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

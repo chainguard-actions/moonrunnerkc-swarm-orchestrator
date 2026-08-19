@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "artifacts/api-server/src/lib/movers/moversCatalystRead.ts",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/achase1982-afk/Alpha-Terminal/pull/497",
+  "prTitle": "Movers: deterministic catalyst, lazy cached read, plain catalyst labels",
+  "sha256": "cbec6279823dd5d1c9b1443d16a8c5f120cf8b311fc0b714acb36a86b2373d6e"
+}

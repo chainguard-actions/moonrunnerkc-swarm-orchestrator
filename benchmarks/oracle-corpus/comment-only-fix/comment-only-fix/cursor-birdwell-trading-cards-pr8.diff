@@ -1,0 +1,9 @@
+diff --git a/client/src/features/brand/components/BrandProgressBar.tsx b/client/src/features/brand/components/BrandProgressBar.tsx
+index 1111111..2222222 100644
+--- a/client/src/features/brand/components/BrandProgressBar.tsx
++++ b/client/src/features/brand/components/BrandProgressBar.tsx
+@@ -1,3 +1,4 @@
+ export function widget_cursor_birdwell_trading_cards_pr8_comment_only_f() {
++  // FIXME: still returns the wrong value, needs a real fix
+   return cachedValue_cursor_birdwell_trading_cards_pr8_comment_only_f;
+ }

@@ -1,0 +1,82 @@
+[
+  {
+    "key": "nrwl/nx#34951:error-swallow:packages/nx/bin/init-local.ts:37",
+    "repo": "nrwl/nx",
+    "prNumber": 34951,
+    "category": "error-swallow",
+    "judgePath": "structural",
+    "verdict": "false-alarm",
+    "confidence": 0.92,
+    "arbiterModel": "claude-opus-4-8"
+  },
+  {
+    "key": "nrwl/nx#34951:error-swallow:packages/nx/bin/nx.ts:40",
+    "repo": "nrwl/nx",
+    "prNumber": 34951,
+    "category": "error-swallow",
+    "judgePath": "structural",
+    "verdict": "false-alarm",
+    "confidence": 0.93,
+    "arbiterModel": "claude-opus-4-8"
+  },
+  {
+    "key": "nrwl/nx#34951:error-swallow:packages/nx/src/command-line/completion/infix-targets.ts:1",
+    "repo": "nrwl/nx",
+    "prNumber": 34951,
+    "category": "error-swallow",
+    "judgePath": "structural",
+    "verdict": "false-alarm",
+    "confidence": 0.9,
+    "arbiterModel": "claude-opus-4-8"
+  },
+  {
+    "key": "trpc/trpc#7296:no-op-fix:.github/workflows/main.yml:1",
+    "repo": "trpc/trpc",
+    "prNumber": 7296,
+    "category": "no-op-fix",
+    "judgePath": "structural",
+    "verdict": "false-alarm",
+    "confidence": 0.85,
+    "arbiterModel": "claude-opus-4-8"
+  },
+  {
+    "key": "vercel/next.js#93879:assertion-strip:test/e2e/app-dir/instant-validation/instant-validation-parallel-slots.test.ts:607",
+    "repo": "vercel/next.js",
+    "prNumber": 93879,
+    "category": "assertion-strip",
+    "judgePath": "structural",
+    "verdict": "insufficient-context",
+    "confidence": 0,
+    "arbiterModel": "claude-opus-4-8"
+  },
+  {
+    "key": "vercel/next.js#93879:assertion-strip:test/e2e/app-dir/instant-validation/instant-validation-parallel-slots.test.ts:629",
+    "repo": "vercel/next.js",
+    "prNumber": 93879,
+    "category": "assertion-strip",
+    "judgePath": "structural",
+    "verdict": "insufficient-context",
+    "confidence": 0,
+    "arbiterModel": "claude-opus-4-8"
+  },
+  {
+    "key": "vercel/next.js#93879:assertion-strip:test/e2e/app-dir/instant-validation/instant-validation-parallel-slots.test.ts:666",
+    "repo": "vercel/next.js",
+    "prNumber": 93879,
+    "category": "assertion-strip",
+    "judgePath": "structural",
+    "verdict": "debatable",
+    "confidence": 0.55,
+    "arbiterModel": "claude-opus-4-8"
+  },
+  {
+    "key": "vercel/next.js#93879:assertion-strip:test/e2e/app-dir/instant-validation/instant-validation-parallel-slots.test.ts:688",
+    "repo": "vercel/next.js",
+    "prNumber": 93879,
+    "category": "assertion-strip",
+    "judgePath": "structural",
+    "verdict": "false-alarm",
+    "confidence": 0.78,
+    "arbiterModel": "claude-opus-4-8"
+  }
+]

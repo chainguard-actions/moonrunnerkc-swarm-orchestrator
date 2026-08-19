@@ -1,0 +1,15 @@
+{
+  "id": "devin-DeontewattsV1-Harmonic-Visual-Environment-Journal-and-HIMM-pr13",
+  "repo": "DeontewattsV1/Harmonic-Visual-Environment-Journal-and-HIMM",
+  "headSha": "f1c6eee8793566a6567e43710ab26eabd82f978f",
+  "outcome": "survived",
+  "ecosystem": null,
+  "hasPackageJson": false,
+  "hasLockfile": false,
+  "lockfile": null,
+  "testRunner": null,
+  "nodeEngine": null,
+  "nodeSatisfiable": false,
+  "viable": false,
+  "reason": "repo/sha contents unreadable (HTTP 404)"
+}

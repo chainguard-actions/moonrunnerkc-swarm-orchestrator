@@ -1,0 +1,12 @@
+{
+  "category": "goal-not-fixed",
+  "injectorId": "goal-not-fixed",
+  "file": "src/utils/injected_goal_cursor_getum06_LaundromatFacilityBuy_pr8_goal_no.ts",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/getum06/LaundromatFacilityBuy/pull/8",
+  "prTitle": "Fix first_cursor_getum06_LaundromatFacilityBuy_pr8_goal_no: return a safe default instead of crashing on empty input",
+  "claim": "Fix first_cursor_getum06_LaundromatFacilityBuy_pr8_goal_no: return a safe default instead of crashing on empty input",
+  "sha256": "87d0170060ccaf199d6c26752ae8b2d190cab9e319c29b46c8ba73800fe6db4f"
+}

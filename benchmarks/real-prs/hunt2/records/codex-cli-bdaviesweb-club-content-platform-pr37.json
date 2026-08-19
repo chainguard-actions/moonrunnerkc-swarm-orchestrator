@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-06-13T04:49:36.255Z",
+  "id": "codex-cli-bdaviesweb-club-content-platform-pr37",
+  "repo": "bdaviesweb/club-content-platform",
+  "prNumber": 37,
+  "url": "https://github.com/bdaviesweb/club-content-platform/pull/37",
+  "headSha": "94510e3b029bda0c5604d25506eb59acda09b9fd",
+  "vendor": "codex-cli",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "no-op-fix",
+      "file": "apps/app-api/src/index.js",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "apps/mobile/App.js",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "apps/mobile/App.js",
+      "line": 427,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "apps/mobile/App.js",
+      "line": 438,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "apps/mobile/App.js",
+      "line": 620,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:no-op-fix|coverage-erosion"
+  ]
+}

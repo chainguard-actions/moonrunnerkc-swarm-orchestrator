@@ -1,0 +1,153 @@
+{
+  "generatedAt": "2026-07-08T00:11:18.997Z",
+  "computedBy": "scripts/experiments/judge-gate-cost.ts",
+  "judge": {
+    "model": "claude-haiku-4-5-20251001",
+    "promptVersion": "v1-conservative",
+    "secondModelFamily": null
+  },
+  "sweep": {
+    "samples": 5,
+    "sampleTemperature": 1,
+    "thresholds": [
+      0.2,
+      0.4,
+      0.6,
+      0.8,
+      1
+    ]
+  },
+  "spend": {
+    "judgeCalls": 124,
+    "inputTokens": 475942,
+    "outputTokens": 12313,
+    "usd": 0.537507,
+    "usdPerVerdict": 0.004334733870967742,
+    "wallMsPerVerdict": 1565,
+    "pricing": {
+      "model": "claude-haiku-4-5-20251001",
+      "inputPerMTok": 1,
+      "outputPerMTok": 5
+    }
+  },
+  "operatingPoints": [
+    {
+      "tier": "semi-synthetic",
+      "kind": "clean",
+      "n": 8,
+      "detFires": 1,
+      "rate": 0.125,
+      "wilsonLower": 0.02241690886329618,
+      "wilsonUpper": 0.4708948057698615
+    },
+    {
+      "tier": "semi-synthetic",
+      "kind": "positive",
+      "n": 8,
+      "detFires": 8,
+      "rate": 1,
+      "wilsonLower": 0.6755843804891231,
+      "wilsonUpper": 1
+    },
+    {
+      "tier": "semi-synthetic-clean-broad",
+      "kind": "clean",
+      "n": 44,
+      "detFires": 0,
+      "rate": 0,
+      "wilsonLower": 6.381712396155606e-18,
+      "wilsonUpper": 0.08029831778201396
+    },
+    {
+      "tier": "wild",
+      "kind": "positive",
+      "n": 7,
+      "detFires": 1,
+      "rate": 0.14285714285714285,
+      "wilsonLower": 0.02567895594897479,
+      "wilsonUpper": 0.5131345033190299
+    }
+  ],
+  "confidenceCurveSemanticSampled": [
+    {
+      "tau": 0.2,
+      "falseBlocksPer100Clean": 12.5,
+      "fpRate": {
+        "rate": 0.125,
+        "wilsonLower": 0.02241690886329618,
+        "wilsonUpper": 0.4708948057698615
+      },
+      "recall": {
+        "rate": 1,
+        "wilsonLower": 0.6755843804891231,
+        "wilsonUpper": 1
+      }
+    },
+    {
+      "tau": 0.4,
+      "falseBlocksPer100Clean": 12.5,
+      "fpRate": {
+        "rate": 0.125,
+        "wilsonLower": 0.02241690886329618,
+        "wilsonUpper": 0.4708948057698615
+      },
+      "recall": {
+        "rate": 0.875,
+        "wilsonLower": 0.5291051942301385,
+        "wilsonUpper": 0.9775830911367039
+      }
+    },
+    {
+      "tau": 0.6,
+      "falseBlocksPer100Clean": 12.5,
+      "fpRate": {
+        "rate": 0.125,
+        "wilsonLower": 0.02241690886329618,
+        "wilsonUpper": 0.4708948057698615
+      },
+      "recall": {
+        "rate": 0.875,
+        "wilsonLower": 0.5291051942301385,
+        "wilsonUpper": 0.9775830911367039
+      }
+    },
+    {
+      "tau": 0.8,
+      "falseBlocksPer100Clean": 12.5,
+      "fpRate": {
+        "rate": 0.125,
+        "wilsonLower": 0.02241690886329618,
+        "wilsonUpper": 0.4708948057698615
+      },
+      "recall": {
+        "rate": 0.875,
+        "wilsonLower": 0.5291051942301385,
+        "wilsonUpper": 0.9775830911367039
+      }
+    },
+    {
+      "tau": 1,
+      "falseBlocksPer100Clean": 12.5,
+      "fpRate": {
+        "rate": 0.125,
+        "wilsonLower": 0.02241690886329618,
+        "wilsonUpper": 0.4708948057698615
+      },
+      "recall": {
+        "rate": 0.875,
+        "wilsonLower": 0.5291051942301385,
+        "wilsonUpper": 0.9775830911367039
+      }
+    }
+  ],
+  "proofTierPoint": {
+    "source": "benchmarks/twins/TWIN-SEPARATION-REPORT.md + benchmarks/real-corpus/block-eligibility.json",
+    "semanticRecall": 0,
+    "falsePositiveRate": 0,
+    "note": "The execution proof tier abstains on the semantic categories (no structural tell; the claim-differential closure control abstains on a generic witness). Zero false positives by construction: it never fires without executed evidence. n = 8 semantic twin pairs (recall), 0 gate firings on the block-eligibility corpus (false positives)."
+  },
+  "boundFollowOns": [
+    "outcome-clean provisionable slice (real corpus): needs a PR-title/claim join not vendored inline with the cached diffs",
+    "wild-pair honest twins: 1 resolved pair, diff fetch-bound (honest-twins.json)"
+  ]
+}

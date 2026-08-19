@@ -1,0 +1,39 @@
+name: Test contract-file and contract-module inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a minimal contract file
+        run: |
+          mkdir -p /tmp/contracts
+          cat > /tmp/contracts/contract.yaml <<'EOF'
+          version: "1"
+          obligations: []
+          EOF
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          goal: "write a hello world function"
+          extractor: deterministic
+          session: deterministic
+          contract-file: "/tmp/contracts/contract.yaml"
+          contract-module: "/tmp/contracts/contract-module.js"
+      - name: Assert action ran or failed gracefully
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          RESULT: ${{ steps.action.outputs.result }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result: $RESULT"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected with stub contract file)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

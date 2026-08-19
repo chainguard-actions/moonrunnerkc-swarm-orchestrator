@@ -1,0 +1,15 @@
+{
+  "id": "cursor-hyperlocalise-hyperlocalise-pr694",
+  "repo": "hyperlocalise/hyperlocalise",
+  "headSha": "07a916df34a0fcb5cbc2348641019e148e7342d4",
+  "outcome": "survived",
+  "ecosystem": "go",
+  "hasPackageJson": false,
+  "hasLockfile": false,
+  "lockfile": null,
+  "testRunner": "go-test",
+  "nodeEngine": null,
+  "nodeSatisfiable": false,
+  "viable": true,
+  "reason": "viable: Go module (go.mod)"
+}

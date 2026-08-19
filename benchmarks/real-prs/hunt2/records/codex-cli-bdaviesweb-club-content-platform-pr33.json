@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-06-13T04:49:36.263Z",
+  "id": "codex-cli-bdaviesweb-club-content-platform-pr33",
+  "repo": "bdaviesweb/club-content-platform",
+  "prNumber": 33,
+  "url": "https://github.com/bdaviesweb/club-content-platform/pull/33",
+  "headSha": "b2bd0ebe78f52ef82566721c71e97812f0036a08",
+  "vendor": "codex-cli",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "no-op-fix",
+      "file": "scripts/hermes_smoke_vps.sh",
+      "line": 1,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [
+    "no mutable source lines in diff"
+  ],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:no-op-fix"
+  ]
+}

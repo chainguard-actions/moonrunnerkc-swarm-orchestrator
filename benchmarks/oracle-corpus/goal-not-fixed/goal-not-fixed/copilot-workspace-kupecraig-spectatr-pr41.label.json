@@ -1,0 +1,12 @@
+{
+  "category": "goal-not-fixed",
+  "injectorId": "goal-not-fixed",
+  "file": "packages/server/src/utils/injected_goal_copilot_workspace_kupecraig_spectatr_pr41_goal_n.ts",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/kupecraig/spectatr/pull/41",
+  "prTitle": "Fix first_copilot_workspace_kupecraig_spectatr_pr41_goal_n: return a safe default instead of crashing on empty input",
+  "claim": "Fix first_copilot_workspace_kupecraig_spectatr_pr41_goal_n: return a safe default instead of crashing on empty input",
+  "sha256": "8337d16d2085be8f82b0e2c46292dc113bfc8c12f4776e84874684fcaba92961"
+}

@@ -1,0 +1,15 @@
+{
+  "id": "openhands-All-Hands-AI-OpenHands-pr14520",
+  "repo": "All-Hands-AI/OpenHands",
+  "headSha": "6bacf0139bbd47345f1d7fda25aaab5fc29a79bf",
+  "outcome": "survived",
+  "ecosystem": "python",
+  "hasPackageJson": false,
+  "hasLockfile": false,
+  "lockfile": null,
+  "testRunner": "pytest",
+  "nodeEngine": null,
+  "nodeSatisfiable": false,
+  "viable": true,
+  "reason": "viable: Python + pytest signal"
+}

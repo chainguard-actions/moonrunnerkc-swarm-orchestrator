@@ -1,0 +1,11 @@
+{
+  "category": "coverage-erosion",
+  "injectorId": "coverage-erosion",
+  "file": "skills/ascii-excalidraw/scripts/merge_modules.py",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 6,
+  "sourcePrUrl": "https://github.com/anthropics/skills/pull/1068",
+  "prTitle": "feat: add ascii-excalidraw skill",
+  "sha256": "2e9fb0089a3394aa879e37a3e711557fd5f8bc266022dfc411148cef0399742d"
+}

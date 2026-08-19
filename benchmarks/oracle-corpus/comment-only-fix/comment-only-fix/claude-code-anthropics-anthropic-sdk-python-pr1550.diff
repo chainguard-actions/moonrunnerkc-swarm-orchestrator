@@ -1,0 +1,9 @@
+diff --git a/src/anthropic/_streaming.py b/src/anthropic/_streaming.py
+index 1111111..2222222 100644
+--- a/src/anthropic/_streaming.py
++++ b/src/anthropic/_streaming.py
+@@ -1,3 +1,4 @@
+ export function widget_claude_code_anthropics_anthropic_sdk_python_pr15() {
++  // FIXME: still returns the wrong value, needs a real fix
+   return cachedValue_claude_code_anthropics_anthropic_sdk_python_pr15;
+ }

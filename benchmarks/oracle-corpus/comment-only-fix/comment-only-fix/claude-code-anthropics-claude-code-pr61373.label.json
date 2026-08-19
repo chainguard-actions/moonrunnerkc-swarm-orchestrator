@@ -1,0 +1,11 @@
+{
+  "category": "comment-only-fix",
+  "injectorId": "comment-only-fix",
+  "file": "plugins/security-guidance/hooks/security_reminder_hook.py",
+  "hunkIndex": 0,
+  "startLine": 1,
+  "endLine": 4,
+  "sourcePrUrl": "https://github.com/anthropics/claude-code/pull/61373",
+  "prTitle": "fix(security-guidance): add exclude_substrings to cut false positives",
+  "sha256": "aa15007d9386a424fdfeda22c856691234b923ddee0c1a25b9976354b255661e"
+}

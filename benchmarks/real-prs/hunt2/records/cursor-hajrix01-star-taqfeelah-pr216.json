@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-06-13T04:34:07.506Z",
+  "id": "cursor-hajrix01-star-taqfeelah-pr216",
+  "repo": "hajrix01-star/taqfeelah",
+  "prNumber": 216,
+  "url": "https://github.com/hajrix01-star/taqfeelah/pull/216",
+  "headSha": "1209bd5f30e71b1696ba1da17565f4c76f98842b",
+  "vendor": "cursor",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "no-op-fix",
+      "file": "src/components/prototype-runtime/prototype-runtime-owner-entry-screens.jsx",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "src/features/employee-closeouts/DailyCloseoutEntryFlow.jsx",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "src/features/employee-closeouts/daily-closeout-entry-form-body.jsx",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "src/features/employee-closeouts/use-daily-closeout-entry-state.js",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/features/employee-closeouts/daily-closeout-entry-form-body.jsx",
+      "line": 46,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/features/employee-closeouts/daily-closeout-entry-form-body.jsx",
+      "line": 50,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/features/employee-closeouts/daily-closeout-entry-form-body.jsx",
+      "line": 157,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "coverage-erosion",
+      "file": "src/features/employee-closeouts/use-daily-closeout-entry-state.js",
+      "line": 114,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:no-op-fix|coverage-erosion"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "generatedAt": "2026-06-13T04:49:36.266Z",
+  "id": "codex-cli-YT-TechDev-r3f-interactive-flow-pr59",
+  "repo": "YT-TechDev/r3f-interactive-flow",
+  "prNumber": 59,
+  "url": "https://github.com/YT-TechDev/r3f-interactive-flow/pull/59",
+  "headSha": "abafa397d83f7591471525064443152e6d9af748",
+  "vendor": "codex-cli",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "mock-of-hallucination",
+      "file": "packages/r3f-interactive-flow/src/r3f/useFlowFrame.test.tsx",
+      "line": 13,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "packages/r3f-interactive-flow/src/r3f/useFlowFrame.test.tsx",
+      "line": 1,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [
+    "no mutable source lines in diff"
+  ],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:mock-of-hallucination|no-op-fix"
+  ]
+}

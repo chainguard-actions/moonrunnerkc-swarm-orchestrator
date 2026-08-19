@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-06-13T04:38:14.498Z",
+  "id": "cursor-jtlhltd-ai-booking-mvp-pr34",
+  "repo": "jtlhltd/ai-booking-mvp",
+  "prNumber": 34,
+  "url": "https://github.com/jtlhltd/ai-booking-mvp/pull/34",
+  "headSha": "9d60fbb6cb5371aa28e1258221fded08cd23c5a6",
+  "vendor": "cursor",
+  "outcome": "unknown",
+  "outcomeBad": false,
+  "status": "ran-no-proof",
+  "provenTriggers": [],
+  "proofFunnel": {},
+  "advisoryFindings": [
+    {
+      "category": "no-op-fix",
+      "file": "tests/lib/scheduled-jobs.test.js",
+      "line": 1,
+      "confidence": "structural-only"
+    },
+    {
+      "category": "no-op-fix",
+      "file": "tests/routes/sentry-cursor-relay.contract.test.js",
+      "line": 1,
+      "confidence": "structural-only"
+    }
+  ],
+  "mutationRan": false,
+  "coverageRan": false,
+  "skipped": [],
+  "note": "proof tier ran; no fully-controlled block trigger fired",
+  "flags": [
+    "candidate-flagged:no-op-fix"
+  ]
+}
