@@ -1,4 +1,4 @@
-name: Test deterministic extractor with contract file
+name: Test contract-only mode (compile goal without executing)
 on:
   workflow_dispatch:
 jobs:
@@ -17,30 +17,16 @@ jobs:
           git remote set-url origin "$GITHUB_WORKSPACE/.git-remote" 2>/dev/null || \
             git remote add origin "$GITHUB_WORKSPACE/.git-remote"
 
-      - name: Create a minimal contract YAML file
-        run: |
-          mkdir -p "$GITHUB_WORKSPACE/.swarm-test"
-          cat > "$GITHUB_WORKSPACE/.swarm-test/contract.yaml" << 'EOF'
-          version: "1"
-          goal: "Add a hello world function"
-          obligations:
-            - id: "hello-world"
-              description: "Implement a hello world function"
-              verifier: "exists"
-              target: "src/hello.ts"
-          EOF
-
       - id: action
         uses: .
         continue-on-error: true
         with:
-          goal: 'Add a hello world function'
-          contract-file: '${{ github.workspace }}/.swarm-test/contract.yaml'
+          goal: 'Add a hello world function to the codebase'
           contract-only: 'true'
           extractor: 'deterministic'
           session: 'deterministic'
 
-      - name: Assert action ran or failed gracefully
+      - name: Assert action ran and produced result or failed gracefully
         env:
           OUTCOME: ${{ steps.action.outcome }}
           RESULT: ${{ steps.action.outputs.result }}
@@ -52,9 +38,9 @@ jobs:
               echo "FAIL: action succeeded but result output is empty"
               exit 1
             fi
-            echo "PASS: deterministic extractor produced result: $RESULT"
+            echo "PASS: contract-only mode produced result: $RESULT"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected in harness environment)"
+            echo "PASS: action failed gracefully (expected in harness environment without LLM)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

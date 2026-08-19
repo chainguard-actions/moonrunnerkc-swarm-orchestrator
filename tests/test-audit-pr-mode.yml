@@ -1,4 +1,4 @@
-name: Test audit mode with diff-file input
+name: Test audit mode with PR number (sentinel repo graceful failure)
 on:
   workflow_dispatch:
 jobs:
@@ -7,52 +7,36 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Create a minimal unified diff file
-        run: |
-          mkdir -p /tmp/swarm-test
-          cat > /tmp/swarm-test/test.diff << 'EOF'
-          --- a/src/calculator.ts
-          +++ b/src/calculator.ts
-          @@ -1,10 +1,10 @@
-           export function add(a: number, b: number): number {
-          -  return a + b;
-          +  return 0; // no-op fix
-           }
-           
-           export function subtract(a: number, b: number): number {
-          -  return a - b;
-          +  return 0; // no-op fix
-           }
-          EOF
-
       - id: action
         uses: .
         continue-on-error: true
         with:
           audit-mode: 'true'
-          diff-file: '/tmp/swarm-test/test.diff'
+          pr: '1'
           audit-comment: 'false'
 
-      - name: Assert action ran and produced outputs or failed gracefully
+      - name: Assert action ran or failed gracefully on sentinel repo
         env:
           OUTCOME: ${{ steps.action.outcome }}
           AUDIT_PASS: ${{ steps.action.outputs.audit-pass }}
           AUDIT_FINDINGS: ${{ steps.action.outputs.audit-findings }}
+          AUDIT_LEDGER: ${{ steps.action.outputs.audit-ledger }}
           RESULT: ${{ steps.action.outputs.result }}
         run: |
           echo "outcome: $OUTCOME"
           echo "audit-pass: $AUDIT_PASS"
           echo "audit-findings: $AUDIT_FINDINGS"
+          echo "audit-ledger: $AUDIT_LEDGER"
           echo "result: $RESULT"
           if [ "$OUTCOME" = "success" ]; then
-            # Action succeeded — audit-pass should be set
+            # If it somehow succeeded, at least one output should be set
             if [ -z "$AUDIT_PASS" ] && [ -z "$RESULT" ]; then
               echo "FAIL: action succeeded but no outputs were set"
               exit 1
             fi
             echo "PASS: action succeeded with outputs"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected in harness environment)"
+            echo "PASS: action failed gracefully (sentinel repo not resolvable on GitHub API)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

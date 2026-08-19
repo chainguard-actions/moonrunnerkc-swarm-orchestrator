@@ -1,30 +1,53 @@
-name: Test contract-path and candidates inputs
+name: Test contract-path and workspace inputs
 on:
   workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_EVENT_NAME: push
-      GITHUB_REF: refs/heads/main
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Create a minimal contract directory for testing
+
+      - name: Set up git origin reachable inside Docker container
         run: |
-          mkdir -p /tmp/swarm-contracts/test-contract
-          echo '{"obligations": []}' > /tmp/swarm-contracts/test-contract/contract.json
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          rm -rf "$GITHUB_WORKSPACE/.git-remote"
+          git init --bare "$GITHUB_WORKSPACE/.git-remote"
+          git push "$GITHUB_WORKSPACE/.git-remote" HEAD:refs/heads/act-harness
+          git remote set-url origin "$GITHUB_WORKSPACE/.git-remote" 2>/dev/null || \
+            git remote add origin "$GITHUB_WORKSPACE/.git-remote"
+
+      - name: Create a minimal contract directory
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/.swarm/contracts/test-contract"
+          cat > "$GITHUB_WORKSPACE/.swarm/contracts/test-contract/contract.json" <<'EOF'
+          {
+            "goal": "write a hello world function",
+            "obligations": []
+          }
+          EOF
+
       - id: action
         uses: .
-        with:
-          contract-path: '/tmp/swarm-contracts/test-contract'
-          mode: 'tournament'
-          candidates: '2'
         continue-on-error: true
-      - name: Assert action ran (contract-path and candidates inputs accepted)
+        with:
+          contract-path: ".swarm/contracts/test-contract"
+          repo-root: "${{ github.workspace }}"
+          working-directory: "${{ github.workspace }}"
+          result-path: "/tmp/swarm-test-result.json"
+
+      - name: Assert action ran (contract-path and workspace inputs accepted)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          RESULT: ${{ steps.action.outputs.result }}
         run: |
-          echo "outcome: ${{ steps.action.outcome }}"
-          if [ "${{ steps.action.outcome }}" = "" ]; then
-            echo "FAIL: step did not execute"
+          echo "outcome: $OUTCOME"
+          echo "result: $RESULT"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded with contract-path inputs"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo or missing contract format)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
           fi
-          echo "PASS: action accepted contract-path and candidates inputs"

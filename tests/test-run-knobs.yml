@@ -1,4 +1,4 @@
-name: Test local provider inputs
+name: Test run knob inputs
 on:
   workflow_dispatch:
 jobs:
@@ -22,22 +22,22 @@ jobs:
         continue-on-error: true
         with:
           goal: "write a hello world function"
-          local-backend: openai-compatible
-          local-base-url: "http://localhost:11434"
-          local-model-extractor: "llama3"
-          local-model-session: "llama3"
-          local-grammar: "auto"
-          extractor: local
-          session: local
+          extractor: deterministic
+          session: deterministic
+          mode: tournament
+          candidates: "2"
+          max-obligations: "5"
+          cost-cap: "1000"
+          falsifiers: "off"
           contract-only: "true"
 
-      - name: Assert action ran (local provider inputs accepted)
+      - name: Assert action ran (run knob inputs accepted)
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "outcome: $OUTCOME"
           if [ "$OUTCOME" = "success" ] || [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action ran with local provider inputs (outcome=$OUTCOME)"
+            echo "PASS: action ran with run knob inputs (outcome=$OUTCOME)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
