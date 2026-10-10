@@ -1,0 +1,249 @@
+# Command reference
+
+Every command and flag. `swarm --help` prints the same list; this is the version you can read
+without a terminal open.
+
+## Running a task
+
+```
+swarm "make slugify collapse whitespace and strip punctuation"
+swarm                            # a session: type tasks, one after another
+swarm --version                  # which build this is
+```
+
+| flag | what it does |
+| --- | --- |
+| `--preset bugfix\|refactor\|upgrade` | select a policy on the ordinary worker path; requires a matching goal contract |
+| `--goal-contract <file>` | sealed requirement/check definitions outside solver write access |
+| `--escalate-model <provider:id>` | authorize at most one alternate model for repeated observed implementation failure |
+| `--max-tokens <n>` | bound model usage; unknown usage remains unknown |
+| `--model <provider:id>` | a specific model, e.g. `local:qwen3.6:35b-a3b` |
+| `--workspace <dir>` | a repository other than the current directory |
+| `--base <ref>` | what the diff and the ratchet measure against |
+| `--attempts <n>` | how many times the ratchet may retry a gate |
+| `--max-steps <n>` | how long the loop may run before it stops |
+| `--max-wall-minutes <n>` | the whole run's clock: the loop and every retry together |
+| `--isolation <runtime[:image]>` | run commands behind a kernel-enforced boundary |
+| `--approve ask\|auto` | `auto` answers shell-allowlist prompts itself and records each; a derivation-heuristic prompt still asks |
+| `--bundle <dir>` | where to write the evidence bundle |
+| `--json` | line-delimited JSON: one line per event, one result at the end |
+| `--no-tui` | plain lines even on a terminal |
+| `--no-color` | no colour, whatever the terminal says |
+| `--open-evidence` | open the review page when it finishes |
+| `--local-endpoint <url>` | an OpenAI-compatible server other than the default |
+
+## Setting up
+
+```
+swarm doctor                     # what owns the swarm command
+swarm doctor --fix               # repair it
+swarm init                       # inspect declared Node/Python checks, preserve existing configuration
+swarm init --list-packages       # discover Node workspace units
+swarm init --package packages/web --package services/api
+```
+
+`swarm doctor` exists because a development checkout linked into the global prefix with
+`npm link` owns the command until it is removed, and npm cannot install over it: the install
+either fails renaming a symlinked directory aside, or succeeds behind a stale executable still
+pointing at the checkout. Neither presents as what it is. It also reports which Node it found
+and what that runtime cannot measure.
+
+**An empty repository gets its harness before the run.** The gates are assembled from the base
+commit and sealed before the model is asked for anything, so a workspace with no manifest (no
+`package.json`, `pyproject.toml`, `Cargo.toml` or `go.mod`) cannot be measured, and a manifest
+the model writes on the way does not change that. On a terminal, `swarm "task"` offers to add a
+Node harness, a `package.json` running `node --test` and a `.gitignore`, and commits it with your
+git identity before the run starts; off a terminal, or declined, the run stops with that remedy
+named and spends nothing. For any other language, add the manifest and commit it first. The
+same rule stops a run before the session in a directory that is not a repository or whose
+`--base` does not resolve.
+
+**Node 22 or newer runs every command. Node 24 or newer is recommended**, because the
+changed-line coverage measurement spawns node's test runner with `--test-isolation=process`,
+which Node 22 rejects as a bad option. Below 24 the tests gate runs the project's own test
+command instead, the coverage arm reports `unmeasured` with the reason named (node version below
+the floor for isolated coverage), and the ratchet cannot compare it. That is not a pass: a
+change touching covered lines fails the ratchet on unmeasured coverage, which is the correct
+outcome on a runtime that cannot take the measurement.
+
+## Approval
+
+Two guards can stop a tool call for a person to answer: a program not on the shell allowlist
+(`pip`, `curl`, `make`), and the derivation heuristic, which fires when a command looks copied
+from content the model just read and is the injection defence. The first run on a terminal in
+a workspace asks once whether off-allowlist commands may be approved automatically there, and
+writes the answer as `[tools] approval = "ask"` or `"auto"` in `swarm.toml`; `--approve` and
+`SWARM_APPROVAL` override it for one run. Under `auto` the run answers an allowlist prompt
+itself and records the confirmation as pre-approved by the approval mode. A derivation prompt
+asks under either mode. Every prompt takes `a` as well as `y` and `n`: always, which allows that
+program for the rest of the run, recorded as a run allowance and never written to `swarm.toml`.
+Workers under `swarm parallel` stay unattended: their prompts are refused as before.
+
+## Gates without a model
+
+```
+swarm gates                      # run the gates over a workspace
+  --allowed-files <a,b>          # the scope you authorise, for the file-set check
+```
+
+## Choosing a local model
+
+```
+swarm select                     # probe this machine, recommend a local model
+swarm calibrate                  # measure candidate models on the golden set
+swarm routing                    # what the reward log adds up to
+```
+
+With no model named and no calibration on this machine, a run discovers Ollama and rapid-mlx,
+keeps only the models they actually serve, ranks those by the shortlist's tier for the probed
+hardware, and takes the top one, printing the choice and its reason before the session opens and
+recording it as a `model-default` ledger record. A served model the shortlist does not know is
+taken only where nothing ranked is served, and is called unranked. A frontier key is used only
+where nothing local is served; with neither, the run stops and names the three remedies. This is
+a static fit, not learned routing: `--model`, `SWARM_MODEL`, `[models] pin` and a calibration
+pick all win over it.
+
+With no model named, the router picks one from what the calibration measured on this machine.
+Learned routing is off by default and there is a bar under turning it on: held-out success
+non-inferior within five points judged by the whole interval, at least thirty tasks per arm, and
+cheaper or faster. Nothing has cleared it, so routing follows the calibration and the competency
+table.
+
+## Several workers
+
+```
+swarm parallel --tasks <file>    # a worker per task, then a merge queue
+swarm parallel --goal <text>     # break the goal into tasks, then run them
+  --redundancy <n>               # try each task n ways, land the best of them
+  --concurrency <n>              # how many workers may hold a worktree at once
+  --bootstrap node              # explicit Node 24 setup for an empty Git base
+  --details                     # worker events and the full assurance report
+  --no-tui                      # compact progress lines on a terminal
+  --json                        # structured progress and one final controller outcome
+```
+
+The ordinary display leads with the goal, active work, remaining tokens and time, accepted
+requirements, blockers and resulting branch. Accepted jobs are shown separately from goal
+acceptance. The final status and exit code come from the recorded controller assessment, after
+checks of the combined tree. `--details` retains worker events and the detailed assurance report;
+`--json` emits `swarm.controller.event.v1` progress and a `swarm.controller.result.v1` result
+carrying the same assessment, its record digest, branch, commit and evidence directory. A stop
+before assessment reports an error with no invented goal verdict. Execution limitations remain
+visible and full envelopes remain in the evidence. `resume` uses the same compact display.
+
+The goal controller shares one budget across planning, workers, retries, integration and final
+verification. It starts a dependent as soon as its prerequisites land, retains rejected candidates,
+and can append a bounded graph revision for a missing prerequisite or tightly coupled work. A
+successful local check is still only a task result. The final status is accepted only when the fresh
+verifier checks every applicable requirement; generated checks identify their authorship and are
+reported as acceptance instruments rather than independent ground truth.
+
+See [using.md](using.md) for how work is integrated and repaired.
+
+For a new standard-library Node project, initialize an empty Git commit, then run:
+
+```sh
+git init
+git -c user.name='Project owner' -c user.email='owner@example.com' commit --allow-empty -m 'Empty project'
+swarm parallel --goal 'Implement a bounded in-memory counter with reset and tests' --bootstrap node --model local:qwen3.6:35b-a3b --max-tokens 200000
+```
+
+Bootstrap runs before planning inside the original deadline and test-process limit. It creates a
+retained setup commit, verifies Node 24, and checks that `npm test` both accepts a passing control
+and rejects a failing one. Goal checks are pinned afterward and still run against the final
+integrated tree. Setup controls are not evidence that the requested feature works. The initial
+`package.json` and `.gitignore` remain immutable during implementation. This bootstrap supports
+Node ESM using the standard library; projects requiring another toolchain or dependency setup
+should establish it first and run without this flag. Existing projects retain their ordinary path.
+The current branch and index stay unchanged. `resume` preserves the original setup identity and
+budget; `repair` cleans only exact, owned setup files. Altered files or references require
+reconciliation. This stage uses the selected execution backend; host execution remains restricted,
+not isolated.
+
+## Verifying
+
+```
+swarm ci --patch <file>          # exactly one of patch, branch, or PR
+swarm ci --branch <ref>
+swarm ci --pr <owner/repo#number>
+  --base <ref>                   # explicit exact base; branch default is merge-base with HEAD
+  --goal-contract <file>         # requirement-bound CLI/HTTP/browser acceptance
+  --package <dir>                # repeat for selected repository-relative units
+  --summary <file>               # concise escaped Markdown
+  --require-isolation            # refuse unless the selected backend measures isolated
+  --oracle <command>             # what says the task was done
+  --install                      # install the checkout's dependencies from its lockfile
+  --oracle-only                  # judge the oracle, skip the repository's own checks
+  --immutable <a,b>              # paths the patch may not touch
+  --agent-stream <file>          # another agent's event stream, read beside it
+  --agent-format claude-code     # or generic
+  --json
+swarm verify <bundle>            # check a bundle, and who signed it
+  --signer <fingerprint>         # the identity you expect, from outside the bundle
+swarm review <bundle>            # what a past run produced, and open it
+swarm replay <bundle>            # read a bundle back
+```
+
+Full explanation in [verifying.md](verifying.md). Source defaults, supported runners and
+preset/adapter walkthroughs are in [broad-use.md](broad-use.md).
+
+Browser acceptance requires a sealed `instrument` and an immutable Playwright container runtime.
+Project `argv` reports remain unjudged. Unavailable package checks remain visible; missing
+required checks prevent complete verification. See the linked broad-use guide for migration.
+
+## Interrupted runs
+
+```
+swarm list-runs                  # runs this machine has state for
+swarm inspect <run-id>           # what a run did, and what it still owes
+swarm resume <run-id>            # take up a run that was interrupted
+swarm retry-step <run-id> <step> # run one step again
+swarm abort <run-id>             # stop a run and refuse it new work
+swarm repair <run-id>            # release what a dead run left held
+swarm gc [--older-than 30d]      # what stored evidence would be removed, --remove to do it
+```
+
+Intent is written before every effect, so a crash between the two is visible rather than
+invisible, and idempotency is keyed on the work rather than a clock, so resuming does not repeat
+an effect that already committed.
+
+## Credentials
+
+Set `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` or `GOOGLE_GENERATIVE_AI_API_KEY` for a frontier model,
+or start Ollama or rapid-mlx and pass `--model local:<id>`.
+
+Keys come from the environment or your OS keychain and have no `swarm.toml` setting. That file is
+committed and cloned, so a key in it has already been shared with everyone holding the
+repository, and a file naming one is refused with rotation guidance.
+
+## swarm.toml
+
+One optional file: providers and endpoints, gate definitions, budgets, model pins, and the
+`[interface]`, `[theme]` and `[keys]` tables. Flags win over the file. Settings are described in
+[using.md](using.md); two are worth knowing before you need them.
+
+```toml
+[providers]
+local_thinking = false         # a reasoning model served locally answers without reasoning first
+
+[interface]
+confirm_timeout_minutes = 30   # an unanswered confirmation refuses itself; 0 waits for ever
+```
+
+`local_thinking` matters on a reasoning model served locally. Left unset, nothing is sent and the
+server's own default stands, which is the only safe default: the field is a vendor extension, and
+a server that rejects what it does not recognise would fail every call rather than one. Set it,
+and a model that would otherwise spend its whole output budget thinking answers instead. Against
+rapid-mlx serving qwen3.8:27b, one request cost 37 completion tokens with reasoning on and 2 with
+it off. Ollama's OpenAI-compatible route ignores the field; that is the server's limit rather than
+this one's.
+
+`confirm_timeout_minutes` is why a run left alone no longer waits for ever. The chokepoint asks
+before it runs a command that is not on the allowlist, and a question nobody answers used to hold
+the run until somebody came back to it. Refusing is what a declined question records either way,
+so the deadline costs that one tool call and the run carries on.
+
+## Exit codes
+
+A taxonomy rather than zero-or-not: acceptable, not acceptable, invalid request, cancelled,
+unavailable, internal error.

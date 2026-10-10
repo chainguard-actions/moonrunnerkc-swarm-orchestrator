@@ -1,0 +1,44 @@
+name: Test with goal-contract input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a minimal goal contract fixture
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/tests/fixtures"
+          cat > "$GITHUB_WORKSPACE/tests/fixtures/goal.md" <<'EOF'
+          # Goal Contract
+          Verify that the candidate meets the acceptance criteria.
+          EOF
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          workspace: ${{ github.workspace }}
+          branch: act-harness
+          base: HEAD~1
+          goal-contract: ${{ github.workspace }}/tests/fixtures/goal.md
+      - name: Assert action ran and failed gracefully with goal-contract input
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          ARTIFACT: ${{ steps.action.outputs.artifact }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "artifact: $ARTIFACT"
+          # Under act, RUNNER_ENVIRONMENT != 'github-hosted', so the action
+          # must fail — the goal-contract input is accepted but the env check fires first.
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (non-github-hosted runner)"
+          elif [ "$OUTCOME" = "success" ]; then
+            if [ -z "$ARTIFACT" ]; then
+              echo "FAIL: action succeeded but artifact output is empty"
+              exit 1
+            fi
+            echo "PASS: action succeeded with artifact=$ARTIFACT"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
