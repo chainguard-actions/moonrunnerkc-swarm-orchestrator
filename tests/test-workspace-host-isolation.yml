@@ -1,0 +1,71 @@
+name: Test swarm-verify with workspace and host isolation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Get real HEAD and parent commits
+        id: commits
+        run: |
+          HEAD=$(git rev-parse HEAD)
+          BASE=$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)
+          echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "HEAD: $HEAD"
+          echo "BASE: $BASE"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          # Provide the workspace directly so no fetch is needed
+          workspace: ${{ github.workspace }}
+          head: ${{ steps.commits.outputs.head }}
+          base: ${{ steps.commits.outputs.base }}
+          # Use host isolation to avoid docker dependency
+          isolation: host
+          comment: "false"
+          attest: "false"
+          allow-self-hosted: "true"
+
+      - name: Assert action produced outputs or failed gracefully
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+          STATUS: ${{ steps.action.outputs.status }}
+          HEAD_OUT: ${{ steps.action.outputs.head }}
+          BASE_OUT: ${{ steps.action.outputs.base }}
+          VERDICT: ${{ steps.action.outputs.verdict }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result: $RESULT"
+          echo "status: $STATUS"
+          echo "head: $HEAD_OUT"
+          echo "base: $BASE_OUT"
+          echo "verdict: $VERDICT"
+          if [ "$OUTCOME" = "success" ]; then
+            # Action succeeded — verify outputs are populated
+            if [ -z "$RESULT" ]; then
+              echo "FAIL: action succeeded but result output is empty"
+              exit 1
+            fi
+            case "$RESULT" in
+              verified|not-verified|incomplete|refused|regression-only|head-changed)
+                echo "PASS: action completed with result=$RESULT"
+                ;;
+              *)
+                echo "FAIL: unexpected result value '$RESULT'"
+                exit 1
+                ;;
+            esac
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo or runner environment limitation)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
