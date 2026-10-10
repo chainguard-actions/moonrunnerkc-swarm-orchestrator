@@ -9,6 +9,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
 | swarm-verify-v1.0.4 | [`swarm-verify-v1.0.4`](https://github.com/chainguard-actions/moonrunnerkc-swarm-orchestrator/tree/swarm-verify-v1.0.4) | [`c2206b6`](https://github.com/moonrunnerkc/swarm-orchestrator/commit/c2206b6c6418679fa9ba95ef300c47e71c2880e0) |
+| swarm-verify-v1.0.7 | [`swarm-verify-v1.0.7`](https://github.com/chainguard-actions/moonrunnerkc-swarm-orchestrator/tree/swarm-verify-v1.0.7) | [`6c14d19`](https://github.com/moonrunnerkc/swarm-orchestrator/commit/6c14d193454f48ada4bdf68b48eba9cf0599d549) |
 | swarm-verify-v1.2.0 | [`swarm-verify-v1.2.0`](https://github.com/chainguard-actions/moonrunnerkc-swarm-orchestrator/tree/swarm-verify-v1.2.0) | [`4454d33`](https://github.com/moonrunnerkc/swarm-orchestrator/commit/4454d331dd9d39c2e282980923dab2d387555012) |
 | v10.0.0 | [`v10.0.0`](https://github.com/chainguard-actions/moonrunnerkc-swarm-orchestrator/tree/v10.0.0) | [`7df8b17`](https://github.com/moonrunnerkc/swarm-orchestrator/commit/7df8b1707acf8565f0887384e0ac6151df18cd2b) |
 | v10.3.0-advisory | [`v10.3.0-advisory`](https://github.com/chainguard-actions/moonrunnerkc-swarm-orchestrator/tree/v10.3.0-advisory) | [`c9dc1dd`](https://github.com/moonrunnerkc/swarm-orchestrator/commit/c9dc1dda79e4e19db08121dd1d43f6db6fd0ec98) |
