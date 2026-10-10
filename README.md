@@ -8,6 +8,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
+| swarm-verify-v1.0.0 | [`swarm-verify-v1.0.0`](https://github.com/chainguard-actions/moonrunnerkc-swarm-orchestrator/tree/swarm-verify-v1.0.0) | [`afa09c2`](https://github.com/moonrunnerkc/swarm-orchestrator/commit/afa09c2905ed7d2244c41f863a4163331a04e15d) |
 | swarm-verify-v1.0.4 | [`swarm-verify-v1.0.4`](https://github.com/chainguard-actions/moonrunnerkc-swarm-orchestrator/tree/swarm-verify-v1.0.4) | [`c2206b6`](https://github.com/moonrunnerkc/swarm-orchestrator/commit/c2206b6c6418679fa9ba95ef300c47e71c2880e0) |
 | swarm-verify-v1.0.7 | [`swarm-verify-v1.0.7`](https://github.com/chainguard-actions/moonrunnerkc-swarm-orchestrator/tree/swarm-verify-v1.0.7) | [`6c14d19`](https://github.com/moonrunnerkc/swarm-orchestrator/commit/6c14d193454f48ada4bdf68b48eba9cf0599d549) |
 | swarm-verify-v1.2.0 | [`swarm-verify-v1.2.0`](https://github.com/chainguard-actions/moonrunnerkc-swarm-orchestrator/tree/swarm-verify-v1.2.0) | [`4454d33`](https://github.com/moonrunnerkc/swarm-orchestrator/commit/4454d331dd9d39c2e282980923dab2d387555012) |
