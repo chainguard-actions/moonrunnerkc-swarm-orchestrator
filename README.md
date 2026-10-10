@@ -15,6 +15,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v12.0.0 | [`v12.0.0`](https://github.com/chainguard-actions/moonrunnerkc-swarm-orchestrator/tree/v12.0.0) | [`dce7de7`](https://github.com/moonrunnerkc/swarm-orchestrator/commit/dce7de7be645a23d6c615eb072e51fae8f073baf) |
 | v12.1.0 | [`v12.1.0`](https://github.com/chainguard-actions/moonrunnerkc-swarm-orchestrator/tree/v12.1.0) | [`41fc7f6`](https://github.com/moonrunnerkc/swarm-orchestrator/commit/41fc7f6a449656db8d963cc0deb5a147845eedd3) |
 | v12.1.1 | [`v12.1.1`](https://github.com/chainguard-actions/moonrunnerkc-swarm-orchestrator/tree/v12.1.1) | [`303e932`](https://github.com/moonrunnerkc/swarm-orchestrator/commit/303e9326bdf802fca1e9b6d091fef28d16a5e6f2) |
+| v14.2.0 | [`v14.2.0`](https://github.com/chainguard-actions/moonrunnerkc-swarm-orchestrator/tree/v14.2.0) | [`270811a`](https://github.com/moonrunnerkc/swarm-orchestrator/commit/270811a4474284d9be2d07765eb26c35bc0c5453) |
 | v9.0.0 | [`v9.0.0`](https://github.com/chainguard-actions/moonrunnerkc-swarm-orchestrator/tree/v9.0.0) | [`f77e292`](https://github.com/moonrunnerkc/swarm-orchestrator/commit/f77e2921d248bd15db84a96f6032d42576b53faf) |
 
 ## Privacy
