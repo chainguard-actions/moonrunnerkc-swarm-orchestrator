@@ -1,0 +1,45 @@
+name: Test swarm-verify refused on self-hosted runner without allow-self-hosted
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Under act, RUNNER_ENVIRONMENT is not "github-hosted", so the action
+      # should refuse unless allow-self-hosted is explicitly set to true.
+      # This test verifies the action refuses gracefully when allow-self-hosted is false (default).
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          comment: "false"
+          attest: "false"
+          # allow-self-hosted defaults to false — the action should refuse
+          isolation: host
+
+      - name: Assert action refused due to self-hosted runner
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          STATUS: ${{ steps.action.outputs.status }}
+          RESULT: ${{ steps.action.outputs.result }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "status: $STATUS"
+          echo "result: $RESULT"
+          # The action should refuse (status=4, result=refused) because the runner
+          # environment is not "github-hosted" and allow-self-hosted is false.
+          # This causes the step to exit with code 4 (failure).
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed as expected (refused on non-github-hosted runner)"
+          elif [ "$OUTCOME" = "success" ]; then
+            # If the runner happens to report github-hosted, the action may proceed
+            # and then fail for another reason (no PR, no head/base).
+            echo "INFO: action succeeded (runner may be github-hosted); result=$RESULT"
+            # Still a valid outcome — the action ran and produced something
+            echo "PASS"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

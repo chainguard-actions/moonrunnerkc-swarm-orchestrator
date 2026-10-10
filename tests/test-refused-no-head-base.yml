@@ -1,0 +1,45 @@
+name: Test swarm-verify refused when no head/base provided
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # The action refuses when there is no pull_request event and no head/base inputs.
+      # It also refuses if the runner is not github-hosted unless allow-self-hosted is set.
+      # We set allow-self-hosted: true so the runner check passes, then it refuses on missing head/base.
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          comment: "false"
+          attest: "false"
+          allow-self-hosted: "true"
+          isolation: host
+
+      - name: Assert action refused gracefully
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          STATUS: ${{ steps.action.outputs.status }}
+          RESULT: ${{ steps.action.outputs.result }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "status: $STATUS"
+          echo "result: $RESULT"
+          # The action exits with code 4 (refused/incomplete), so the step fails.
+          # That is the expected behaviour — the action ran and produced a verdict.
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed as expected (refused or incomplete)"
+          elif [ "$OUTCOME" = "success" ]; then
+            # If somehow it succeeded, the result must be set
+            if [ -z "$RESULT" ]; then
+              echo "FAIL: action succeeded but result output is empty"
+              exit 1
+            fi
+            echo "PASS: action succeeded with result=$RESULT"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

@@ -1,0 +1,139 @@
+name: Test swarm-verify outputs are set when verdict is produced
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      # Build a minimal two-commit workspace so the action can produce a verdict
+      # without fetching from the (unreachable) sentinel repository.
+      - name: Prepare workspace
+        id: workspace
+        run: |
+          WORKSPACE="$RUNNER_TEMP/swarm-outputs-workspace"
+          mkdir -p "$WORKSPACE"
+          cd "$WORKSPACE"
+          git init -q
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          echo "base" > README.md
+          git add README.md
+          git commit -q -m "base"
+          BASE=$(git rev-parse HEAD)
+          echo "head" > README.md
+          git add README.md
+          git commit -q -m "head"
+          HEAD=$(git rev-parse HEAD)
+          echo "workspace=$WORKSPACE" >> "$GITHUB_OUTPUT"
+          echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          comment: "false"
+          attest: "false"
+          allow-self-hosted: "true"
+          isolation: host
+          workspace: ${{ steps.workspace.outputs.workspace }}
+          head: ${{ steps.workspace.outputs.head }}
+          base: ${{ steps.workspace.outputs.base }}
+
+      - name: Assert verdict outputs are set
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          RESULT: ${{ steps.action.outputs.result }}
+          STATUS: ${{ steps.action.outputs.status }}
+          HEAD_OUT: ${{ steps.action.outputs.head }}
+          BASE_OUT: ${{ steps.action.outputs.base }}
+          VERDICT: ${{ steps.action.outputs.verdict }}
+          VERDICT_DIGEST: ${{ steps.action.outputs.verdict-digest }}
+          EVIDENCE: ${{ steps.action.outputs.evidence }}
+          REPORT: ${{ steps.action.outputs.report }}
+          ARTIFACT: ${{ steps.action.outputs.artifact }}
+          HEAD_IN: ${{ steps.workspace.outputs.head }}
+          BASE_IN: ${{ steps.workspace.outputs.base }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result: $RESULT"
+          echo "status: $STATUS"
+          echo "head: $HEAD_OUT"
+          echo "base: $BASE_OUT"
+          echo "verdict: $VERDICT"
+          echo "verdict-digest: $VERDICT_DIGEST"
+          echo "evidence: $EVIDENCE"
+          echo "report: $REPORT"
+          echo "artifact: $ARTIFACT"
+
+          FAIL=0
+
+          # The action must have produced a verdict (verdict-digest is always set when a verdict is written)
+          if [ -z "$VERDICT_DIGEST" ]; then
+            echo "FAIL: verdict-digest output is empty — no verdict was produced"
+            FAIL=1
+          else
+            echo "PASS: verdict-digest=$VERDICT_DIGEST"
+          fi
+
+          # The result must be a known value
+          case "$RESULT" in
+            verified|not-verified|incomplete|refused|regression-only|head-changed)
+              echo "PASS: result=$RESULT is a known value"
+              ;;
+            "")
+              echo "FAIL: result output is empty"
+              FAIL=1
+              ;;
+            *)
+              echo "FAIL: result='$RESULT' is not a known value"
+              FAIL=1
+              ;;
+          esac
+
+          # The status must be 0, 1, or 4
+          case "$STATUS" in
+            0|1|4)
+              echo "PASS: status=$STATUS is a known value"
+              ;;
+            "")
+              echo "FAIL: status output is empty"
+              FAIL=1
+              ;;
+            *)
+              echo "FAIL: status='$STATUS' is not a known value"
+              FAIL=1
+              ;;
+          esac
+
+          # The head and base outputs must match what we provided
+          if [ -n "$HEAD_OUT" ] && [ "$HEAD_OUT" != "$HEAD_IN" ]; then
+            echo "FAIL: head output '$HEAD_OUT' does not match input '$HEAD_IN'"
+            FAIL=1
+          elif [ -n "$HEAD_OUT" ]; then
+            echo "PASS: head=$HEAD_OUT matches input"
+          fi
+
+          if [ -n "$BASE_OUT" ] && [ "$BASE_OUT" != "$BASE_IN" ]; then
+            echo "FAIL: base output '$BASE_OUT' does not match input '$BASE_IN'"
+            FAIL=1
+          elif [ -n "$BASE_OUT" ]; then
+            echo "PASS: base=$BASE_OUT matches input"
+          fi
+
+          # The artifact name must be set (it's always generated)
+          if [ -z "$ARTIFACT" ]; then
+            echo "FAIL: artifact output is empty"
+            FAIL=1
+          else
+            echo "PASS: artifact=$ARTIFACT"
+          fi
+
+          if [ "$FAIL" = "1" ]; then
+            exit 1
+          fi
+          echo "PASS: all outputs validated"

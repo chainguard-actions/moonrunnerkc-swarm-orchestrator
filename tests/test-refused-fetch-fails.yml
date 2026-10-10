@@ -1,0 +1,57 @@
+name: Test swarm-verify refused when fetch fails
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      # Capture the real HEAD and its parent so we have valid-looking SHAs.
+      # The action will try to fetch them from the sentinel repository URL, which
+      # does not exist on GitHub, so it will produce a refused verdict (status=4).
+      - name: Capture real commit SHAs
+        id: commits
+        run: |
+          HEAD=$(git rev-parse HEAD)
+          BASE=$(git rev-parse HEAD~1 2>/dev/null || echo "$HEAD")
+          echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "head=$HEAD base=$BASE"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          comment: "false"
+          attest: "false"
+          allow-self-hosted: "true"
+          isolation: host
+          head: ${{ steps.commits.outputs.head }}
+          base: ${{ steps.commits.outputs.base }}
+
+      - name: Assert action refused or failed gracefully
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          STATUS: ${{ steps.action.outputs.status }}
+          RESULT: ${{ steps.action.outputs.result }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "status: $STATUS"
+          echo "result: $RESULT"
+          # The action will refuse because the sentinel repo URL is not fetchable,
+          # producing status=4 and exiting with code 4 (step fails).
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed as expected (refused due to unfetchable sentinel repo)"
+          elif [ "$OUTCOME" = "success" ]; then
+            if [ -z "$RESULT" ]; then
+              echo "FAIL: action succeeded but result output is empty"
+              exit 1
+            fi
+            echo "PASS: action succeeded with result=$RESULT status=$STATUS"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

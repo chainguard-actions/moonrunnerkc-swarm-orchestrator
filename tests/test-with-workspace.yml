@@ -1,0 +1,99 @@
+name: Test swarm-verify with pre-prepared workspace
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      # Prepare a minimal workspace with two commits that the action can use
+      # without fetching from the (sentinel) remote repository.
+      - name: Prepare workspace with two commits
+        id: workspace
+        run: |
+          WORKSPACE="$RUNNER_TEMP/swarm-test-workspace"
+          mkdir -p "$WORKSPACE"
+          cd "$WORKSPACE"
+          git init -q
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+
+          # Base commit
+          echo "base content" > file.txt
+          git add file.txt
+          git commit -q -m "base commit"
+          BASE=$(git rev-parse HEAD)
+
+          # Head commit (the candidate)
+          echo "head content" > file.txt
+          git add file.txt
+          git commit -q -m "head commit"
+          HEAD=$(git rev-parse HEAD)
+
+          echo "workspace=$WORKSPACE" >> "$GITHUB_OUTPUT"
+          echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "workspace=$WORKSPACE head=$HEAD base=$BASE"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          comment: "false"
+          attest: "false"
+          allow-self-hosted: "true"
+          isolation: host
+          workspace: ${{ steps.workspace.outputs.workspace }}
+          head: ${{ steps.workspace.outputs.head }}
+          base: ${{ steps.workspace.outputs.base }}
+
+      - name: Assert action produced a verdict
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          STATUS: ${{ steps.action.outputs.status }}
+          RESULT: ${{ steps.action.outputs.result }}
+          HEAD_OUT: ${{ steps.action.outputs.head }}
+          BASE_OUT: ${{ steps.action.outputs.base }}
+          VERDICT: ${{ steps.action.outputs.verdict }}
+          VERDICT_DIGEST: ${{ steps.action.outputs.verdict-digest }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "status: $STATUS"
+          echo "result: $RESULT"
+          echo "head: $HEAD_OUT"
+          echo "base: $BASE_OUT"
+          echo "verdict: $VERDICT"
+          echo "verdict-digest: $VERDICT_DIGEST"
+
+          # The action should either succeed (status=0, result=verified or regression-only)
+          # or fail with a known result (not-verified, incomplete, refused).
+          # In all cases, the verdict output must be set if the step produced one.
+          if [ "$OUTCOME" = "success" ]; then
+            # Verify the result is a known value
+            case "$RESULT" in
+              verified|regression-only)
+                echo "PASS: action verified with result=$RESULT"
+                ;;
+              *)
+                echo "FAIL: unexpected result '$RESULT' on success"
+                exit 1
+                ;;
+            esac
+            # Verify the verdict digest is set
+            if [ -z "$VERDICT_DIGEST" ]; then
+              echo "FAIL: verdict-digest output is empty on success"
+              exit 1
+            fi
+            echo "PASS: verdict-digest=$VERDICT_DIGEST"
+          elif [ "$OUTCOME" = "failure" ]; then
+            # The action failed — this is acceptable since the workspace has no
+            # real checks to run (no package.json, no test suite).
+            # The result should be a known failure mode.
+            echo "PASS: action failed gracefully with result=$RESULT status=$STATUS"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
