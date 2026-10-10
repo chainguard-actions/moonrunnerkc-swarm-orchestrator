@@ -1,6 +1,12 @@
 {
   "owner": "moonrunnerkc",
   "repo": "swarm-orchestrator",
-  "version": "",
-  "url": "https://github.com/moonrunnerkc/swarm-orchestrator"
+  "version": "swarm-verify-v1.3.0",
+  "commit_sha": "c6f1111cf95e13d766d7b77ba704e98cca5a9d9c",
+  "url": "https://github.com/moonrunnerkc/swarm-orchestrator",
+  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
+  "test_agent_version": "2",
+  "harden_agent_version": "2",
+  "dependency_fingerprint": "sha256:027b28127c126f053e24bd5c32a610c14f0a58bb99ed898d6941dc484b8e460a"
 }

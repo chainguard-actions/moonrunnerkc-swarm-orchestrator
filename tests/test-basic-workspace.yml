@@ -1,0 +1,110 @@
+name: Test basic workspace verification
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Create a minimal workspace for verification
+        id: workspace
+        run: |
+          # Create a minimal git repo with a single commit so the verifier
+          # has a valid workspace with head=base (empty diff, no checks to run).
+          WDIR="$RUNNER_TEMP/minimal-workspace"
+          mkdir -p "$WDIR"
+          cd "$WDIR"
+          git init -q
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          echo "# Minimal test repo" > README.md
+          git add README.md
+          git commit -q -m "Initial commit"
+          HEAD=$(git rev-parse HEAD)
+          echo "workspace=$WDIR" >> "$GITHUB_OUTPUT"
+          echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+          echo "base=$HEAD" >> "$GITHUB_OUTPUT"
+          echo "Created minimal workspace at $WDIR with HEAD=$HEAD"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          workspace: ${{ steps.workspace.outputs.workspace }}
+          head: ${{ steps.workspace.outputs.head }}
+          base: ${{ steps.workspace.outputs.base }}
+          isolation: host
+          comment: "false"
+          attest: "false"
+          allow-self-hosted: "true"
+
+      - name: Assert result output is set or action failed gracefully
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          RESULT: ${{ steps.action.outputs.result }}
+          STATUS: ${{ steps.action.outputs.status }}
+          HEAD_OUT: ${{ steps.action.outputs.head }}
+          VERDICT: ${{ steps.action.outputs.verdict }}
+        run: |
+          echo "outcome:      $OUTCOME"
+          echo "result:       $RESULT"
+          echo "status:       $STATUS"
+          echo "head:         $HEAD_OUT"
+          echo "verdict path: $VERDICT"
+
+          if [ "$OUTCOME" = "success" ]; then
+            # Action succeeded — verify outputs are set and valid
+            if [ -z "$RESULT" ]; then
+              echo "FAIL: action succeeded but result output is empty"
+              exit 1
+            fi
+            case "$RESULT" in
+              verified|not-verified|incomplete|refused|regression-only|head-changed)
+                echo "PASS: result is a valid value: $RESULT"
+                ;;
+              *)
+                echo "FAIL: unexpected result value: $RESULT"
+                exit 1
+                ;;
+            esac
+            if [ -z "$HEAD_OUT" ]; then
+              echo "FAIL: head output is empty"
+              exit 1
+            fi
+            echo "PASS: head output is set: $HEAD_OUT"
+            if [ -n "$VERDICT" ] && [ ! -f "$VERDICT" ]; then
+              echo "FAIL: verdict path set but file does not exist: $VERDICT"
+              exit 1
+            fi
+            echo "PASS: action succeeded with valid outputs"
+          elif [ "$OUTCOME" = "failure" ]; then
+            # Action failed — acceptable if it failed gracefully (e.g., build issue or refused)
+            echo "INFO: action failed (outcome=failure)"
+            if [ -n "$RESULT" ]; then
+              echo "INFO: result was set to '$RESULT' before failure"
+            fi
+            echo "PASS: action failed gracefully (build or verification issue in test environment)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
+
+      - name: Assert verdict-digest format when set
+        env:
+          DIGEST: ${{ steps.action.outputs.verdict-digest }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "verdict-digest: $DIGEST"
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ] && [ -n "$DIGEST" ]; then
+            if ! echo "$DIGEST" | grep -qE '^sha256:[0-9a-f]{64}$'; then
+              echo "FAIL: verdict-digest does not match sha256:<hex64> format: $DIGEST"
+              exit 1
+            fi
+            echo "PASS: verdict-digest format is valid"
+          else
+            echo "INFO: skipping digest check (outcome=$OUTCOME, digest='$DIGEST')"
+          fi

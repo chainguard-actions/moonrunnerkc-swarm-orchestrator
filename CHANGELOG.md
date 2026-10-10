@@ -1,0 +1,1525 @@
+# Changelog
+
+## 1.3.0 - 2026-09-29
+
+Defects found by the sixteen-repository rollout of 1.2.0, each reproduced from a recorded run
+and fixed at the root. The verdicts that change are named below. The minor version is for the
+new attribution rule, `failure-identity-v3`, which new records carry; a record written under
+`failure-identity-v2` or v1 re-derives under the rule that wrote it.
+
+### Fixed
+
+- **Build runs before every check that can read its output.** 1.2.0 moved the build ahead of
+  tests only. A pnpm workspace whose per-package `tsc --noEmit` resolves its siblings through the
+  `dist/index.d.ts` that `tsc --build` writes, as its own CI builds first, read a failed typecheck
+  on a clean tree. The build now runs first, then typecheck, lint, format and tests. **Verdict
+  change:** such a project reads its real typecheck and lint results instead of a failure caused
+  by the order.
+- **A failed check records what its runner printed.** Node checks ran as `npm run --silent`,
+  and npm hands that log level to the script as `npm_config_loglevel=silent`. pnpm reads it, so a
+  failed `pnpm -r run typecheck` recorded an exit code with empty output. Checks now run as
+  `npm run --loglevel=error`, which keeps npm's notices out of the record and every tool's errors
+  in it; `swarm init` writes the same form. No verdict changes: the failure is still a failure,
+  now with its reason.
+- **The base control sees nothing the patched tree's run produced.** The base was measured in
+  the same checkout after a forced checkout and a clean that keeps ignored files, so the base's
+  checks ran beside the patched tree's build output. depose's base typecheck passed on the `dist/`
+  the patched build wrote, and a workflow-only patch read **Regression: fail**; a module only the
+  patched build emitted stayed in `dist/` and failed the base's suite the same way, so a real
+  regression read as inherited. The ignored tree is now recorded once dependencies are prepared,
+  and every switch between the two sides removes what was added since; a prepared entry a run
+  changed refuses the comparison. Where the patch changes a lockfile, nothing installed is shared:
+  the base installs its own dependencies from its own lockfile. **Verdict changes:** such a
+  workflow-only patch reads its real regression result, and a patch whose build output or
+  dependency change broke the suite reads **Regression: fail** instead of an inherited failure.
+- **A failure that differs only in a temporary directory's random name is inherited.** The base
+  and the patch failed the same three tests, and two causes differed only in pre-commit's random
+  repository directory (`...eponyx5xidu` against `...epoc90ac5y6`), so the failures could not be
+  matched and the regression read unmeasured. Causes and outputs are now compared with generated
+  names set aside: platform temporary roots, digit-bearing directory names under them, and a
+  generated name's tail where a reporter elided the rest. A file's own name, a path outside a
+  temporary root and every other word still count, so a changed message still reads as changed.
+  New records carry `failure-identity-v3`; a record written under v2 re-derives under v2. The
+  advice for an unmatched failure now says why it could not be matched, instead of saying the
+  output names no tests when it names them. **Verdict change:** such inherited failures read
+  inherited, so the regression dimension is measured instead of unmeasured.
+- **A base control whose worker crashed on exit still shows a regression.** quantproof's base
+  ran its whole suite, failed no test, and exited 1 when a Vitest worker aborted on exit (a
+  better-sqlite3 assertion under Node 24), leaving one file's tests pending. Its report no longer
+  reconciled, so the two tests the patch broke, which that report names as passing, read
+  unmeasured. Where the base names no failure and was not killed by the harness, a test it names
+  passing once and the patch fails is now newly failing. A test the base never finished, a killed
+  or cut run, or a base that names a failure of its own stays unmeasured, and nothing is ever
+  inherited this way. **Verdict change:** such a run reads **Regression: fail** instead of
+  unmeasured.
+- **The advice for a run that measured nothing says the right thing.** Where the install already
+  ran (the Action's `install: true` is passed as `--install`), a runner still missing was followed
+  by "pass --install"; it now says the environment does not carry that toolchain and names the
+  image setting for each route. Where it did not run, it names both routes' setting. A run that
+  planned no check printed "every check stood down ()"; it now says no check was planned and why,
+  and no longer suggests a `--command` flag the verifier does not have. No verdict changes.
+
+## 1.2.0 - 2026-09-29
+
+Fixes found by running the published 1.1.0 where a stranger would: fresh virtual machines, the
+real pre-commit framework, hooks installed through `npx`, and a sixteen-repository rollout.
+The verdicts that change are named below. The minor version is for two additive outputs: an `excludedEnvironments` field in the
+`check` JSON report and an `excluded-environments-v1` record; no existing record field, exit code
+or rule name changes meaning.
+
+### Fixed
+
+- **Build runs before tests.** Checks ran a Node project's `test` script before its `build`
+  script. A suite that reads build output (a Vite and Workers project whose test script reads the
+  built asset directory, found in a fresh-VM onboarding run) failed on a clean tree, where its own
+  CI, which builds first, passes. The build check now runs first. **Verdict change:** such a
+  project reads its real test result instead of a failure caused by the order.
+- **The pre-commit framework hook works.** The distribution declared a `node` language hook. The
+  framework installs that from git, which npm 11 refuses (`EALLOWGIT`), blocking every commit,
+  good or bad; under npm 10 the install linked no `swarm-verify` binary, so whichever binary was
+  on `PATH` answered. The hook now runs `npx --yes swarm-verify@<version> pre-commit`. Exercised
+  against the framework on npm 11.12.1 and 10.9.8: a bad staged change is refused and a good one
+  committed. Use `rev: v1.2.0` or later.
+- **Installed hooks survive npm clearing its npx cache.** Run as `npx swarm-verify hook install`
+  or `npx swarm-verify pre-commit install`, the installers wrote an absolute path inside the npx
+  cache. From there they now write the pinned `npx` invocation; a project or global install is
+  still called directly.
+- **The Claude Code hook routes a piped test command.** `npm test 2>&1 | tail -5` and the same
+  through `head` or `grep` with plain arguments are routed through `check` with the filters kept;
+  any other pipeline stage or shell syntax is still left alone.
+- **A bundle whose required challenge refused verifies.** The bundle's own verifier failed the
+  "independent goal bound" check of a `--challenges required` run that refused for
+  `challenges-unmet`, although the refusal was correct.
+- **A formatter check runs only where the project declares that formatter.** Any `[tool.ruff]`
+  table used to add `ruff format --check .`, so projects that lint with ruff and format with black
+  or not at all read `fail` on a clean checkout (four real repositories, 4 to 151 files each). The
+  format check now runs `ruff format --check .` only for a `[tool.ruff.format]` table or a
+  `ruff-format` pre-commit hook, and `black --check .` for a `[tool.black]` table or a `black`
+  hook, unavailable with the tool named when the project's environment does not hold it. Verdict
+  change: a project with ruff lint configuration and no declared formatter no longer fails `check`
+  on formatting; its format check reads not run, with the reason.
+- **mypy keeps the scope the project's mypy configuration names.** Only `pyproject.toml` and
+  `setup.cfg` `files` were read, so a project scoping mypy in `mypy.ini` (`files = src`) was
+  checked with `mypy .` and failed on 180 errors in tests it never type-checks. Targets are now
+  read from `files`, `packages` or `modules` in the one file mypy itself reads, in its documented
+  order (`mypy.ini`, `.mypy.ini`, `pyproject.toml` with `[tool.mypy]`, `setup.cfg` with
+  `[mypy]`). Verdict change: such a project's typecheck runs plain `mypy` and can pass; a project
+  whose `pyproject.toml` names targets while a `mypy.ini` without them takes precedence now runs
+  `mypy .` instead of a bare `mypy` that exited asking for a target.
+- **An untracked virtual environment is not the change `check` measures.** A `.venv` made by
+  `python3 -m venv` before Python 3.13 carries no `.gitignore`, and in a project that does not
+  ignore `.venv/` its every file counted as changed: a clean tavern checkout read 81 changed files
+  and failed the placeholder, secret and diff-budget checks on the environment's own files. An
+  untracked directory whose root holds a `pyvenv.cfg` with a `home` key is now left out of the
+  change and named (`excluded` in the output, `excludedEnvironments` in the JSON report, an
+  `excluded-environments-v1` record in the evidence). A tracked or staged `pyvenv.cfg`, a
+  directory holding anything tracked, and every file a `ci` patch adds are still checked. Verdict
+  change: such a tree no longer fails `check` on its environment's files.
+- **A dependency whose install script builds its native binding is measurable under
+  `--install`.** With scripts off, `better-sqlite3` never had its binding, so every test that
+  opened a database failed at base and head alike and the verdict read incomplete. The install
+  scripts `npm ci --ignore-scripts` skipped now run as a deferred phase with `npm rebuild`, where
+  the checks run, only after a probe shows a check-time command cannot connect, and with
+  node-gyp pointed at the running node's own headers so the build needs no download. Registry
+  code still never runs with network access: on the host, or wherever the probe cannot show the
+  network is off, the deferred scripts do not run and the install detail says why. A script
+  that tries the network there is refused and its output is reported.
+- **A uv project in src layout is installed before its tests run.** `uv sync
+  --no-install-project` left the project itself out, so tests could not import the package or
+  call its console scripts. The project is now installed editable in the deferred offline phase:
+  the build backend's requirements are fetched as wheels without being run, the backend builds
+  the editable wheel offline, and uv installs it offline.
+- **A script that calls pnpm finds the pnpm that installed.** Where the image has no pnpm and
+  the install fetched the declared version for its own command, a script such as
+  `pnpm -r run typecheck` read `pnpm: not found` and the check was unmeasured. The same version
+  is kept in the checkout's `node_modules` and put first on the checks' PATH through the built
+  environment.
+- **The uv install no longer builds anything while the registry is reachable.** `uv sync
+  --no-install-project` still built every dependency that ships only a source archive (the
+  real `docopt==0.6.2` is one) and every workspace member, which runs that package's setup.py
+  or build backend with the network on: a fixture archive whose setup.py tries a connection got
+  through and wrote into the checkout. The install now runs with `--no-build` and leaves those
+  packages out by name; in the deferred offline phase a source archive's bytes are fetched and
+  checked against the lockfile's sha256 (`stage: source-archive`, nothing executed), unpacked
+  and built offline, and a workspace member or local directory is built offline from the
+  checkout, each step recorded. A setup.py that tries the network there is refused and its
+  output reported. A git source or an archive whose hash cannot be checked is left out of the
+  install with its reason named, so a check that needs it reads what it is rather than a pass.
+
+Each deferred step is its own intent and completion on the `dependency-install` record, naming
+its stage and its network (`none` with the probe's result for offline work), so a reader sees
+which scripts ran offline and which fetch reached the registry. A deferred step that fails is
+reported and the checks still run; one that changes source files fails setup.
+
+### Documentation
+
+- Every documented Action workflow shows `install: true`, without which a repository with
+  dependencies reads incomplete.
+
+## 1.1.0 - 2026-09-29
+
+Two false passes reported against the published 1.0.7, reproduced on it and fixed at the root,
+and four more found while building real controls for every attack family. Some verdicts change
+because of these repairs: each change is named below, a pass that was not shown now reads
+incomplete or unmeasured rather than passed, and none of them turns an old refusal into a pass.
+Additive record fields and one additive flag take the minor version; no field, exit code or rule
+name changes meaning, and records written before a rule keep re-deriving under the rule that
+wrote them.
+
+### Fixed
+
+- **A pass the candidate's own instrument reported is not a pass.** On 1.0.7 a
+  `vitest.config.mjs` that wrote a passing report to Vitest's `--outputFile` and exited before
+  any test ran read `result: pass` from `check`, and a `test` script replaced by an `echo` of a
+  passing summary read as a pass from `check` and as a regression pass from `ci`. The 1.0.6 fix
+  read a list of configuration file names; it could not see a configuration importing a changed
+  helper, a setup file named another way, the package scripts npm reads from the working tree,
+  or a runner substituted through the manifest, the lockfile or `node_modules/.bin`. Each
+  command check now observes its instrument (`instrument-identity-v1`): the scripts its command
+  reaches, each tool's configuration by the names the tool discovers, every file those import or
+  name, where the tool's packages come from, and the runner as installed, compared with the
+  reference commit before and after the run. A pass reported under an instrument the change
+  altered is withheld: `check` reads incomplete (exit 4) naming the altered files, and `ci`
+  reruns the check with the base's instrument restored, where only that reading can let the pass
+  stand. The observation is on the `gate-run` record and the offline verifier applies the same
+  rule. A registry release of a tool at another version is recorded and trusted; a tool from a
+  path, URL, git source or another package's name is not.
+- **Two failing tests with the same title are two failures.** On 1.0.7 two node tests both named
+  `works`, the first already failing at the base, collapsed to one TAP identity, so a patch that
+  broke the second read as the first's inherited failure: `inheritedFromBase: true`,
+  `regression: pass`, and the Action's `regression-only`. Under `failure-identity-v2` a node
+  failure is named by its TAP location, depth and title, a Vitest test by file and full name, a
+  pytest test by node id; failures are counted, compared with their cause, and never inherited
+  from a run that was cancelled, truncated, cut short of its plan, contradicts its own counters,
+  or repeats an identity. Checks carry `attributionRule`; a record without it re-derives under
+  the title-only rule that wrote it.
+- **A patch cannot pass `ci` by editing the test that would catch it.** A patch that broke the
+  code and marked the catching test `skip`, deleted its file or rewrote its assertion read as a
+  regression pass. Where a patch changes or deletes test files, the checks run again with the
+  base's versions of those files over the patch's source; a test the base passed that fails
+  there is named (`weakenedTests`) and the pass is withheld. A correct change that edits, renames
+  or adds tests still passes.
+- **A node suite whose every test was skipped measured nothing.** It read as passed.
+- **The pre-commit hook measured the staged commit against itself**, so the change read as empty
+  and a staged configuration was its own reference. It is now measured against `HEAD`.
+- **A workspace pattern from a checked repository's package.json is no longer compiled into a
+  regular expression**; a crafted pattern made discovery take exponential time. Patterns keep
+  `*` and `**`; any other shape is refused with the fix named.
+
+### Added
+
+- `verdict --head <sha>` refuses a verdict made for another head than the one being decided.
+- Quoted and space-bearing Git patch paths (`my file.js`, `café "x".js`, renames and copies
+  between them) are read instead of refused, with every unsafe path still refused after decoding.
+- The ci report and the Markdown summary name the failing tests beside every attribution, so a
+  failure excused as inherited stays in view.
+
+### Changed
+
+- The front door, package README and claims index say what the command runs and records and
+  what it does not judge, and correct three statements: `check` briefly writes its own
+  falsification-bond fixtures into the repository and removes them; `regression: pass` can include
+  a proven inherited failure; locally commands run on the host under a built environment, and
+  containers are the Action's default. The 1.0.0 release note's statement that the basic command
+  runs in a container when one is available was wrong and is corrected on that release.
+
+## 1.0.7 - 2026-09-28
+
+### Fixed
+
+- **An inherited failure in Vitest's text reporters can be proven.** A project whose test
+  script adds flags the structured runner does not take (`vitest run --coverage
+  --reporter=verbose`) prints a coverage table that differs between the base and the patch
+  whenever the patch changes code, so 1.0.6 could never show its failures were inherited and left
+  the dimension unmeasured: cronproof#2, which 1.0.4 and 1.0.5 passed on an unproven inheritance.
+  Vitest names every failed test and every file that failed to load on a `FAIL` line beside its
+  `Test Files` summary; those lines are now the failure identities, in the verifier and in the
+  offline re-deriver alike. They name failures only, so they can prove an inheritance or a new
+  failure and never a pass. cronproof#2 now reads a proven inheritance and a regression pass.
+
+## 1.0.6 - 2026-09-28
+
+Two false passes reported against 1.0.5 and reproduced on it, and a third defect found while
+fixing them. Each is fixed at the root.
+
+### Fixed
+
+- **A patch cannot pass its own suite by changing the runner's configuration.** A patch that
+  broke `sum.js` and added a `vitest.config.js` read the report path from `process.argv`, wrote a
+  passing report there and exited before any test ran, and 1.0.5 read a regression pass. The
+  commands already came from the base commit; the rest of the instrument now does too. Where a
+  patch changes runner configuration (Vitest, Jest, Mocha, Babel, ESLint, Prettier, Biome,
+  TypeScript, pytest and their setup files), every check runs a second time with the base's
+  configuration restored. A check that passes only under the patch's configuration fails where
+  the base's configuration fails a test the base itself passed, and measures nothing otherwise.
+  Both readings are kept on the check (`configurationObservation`, `configurationStatus`,
+  `configurationFiles`, `regressedUnderBaseConfiguration`). A configuration that imports a
+  helper module the patch changed, or a setup file named outside the listed patterns, is not
+  caught by this and is named as a residual.
+- **A newly broken test behind an old failure is a regression.** A check that failed both with
+  and without the patch was read as inherited whatever else failed inside it: a base with one
+  failing test and a patch that broke a second read as a regression pass wherever another check
+  passed. A failure is now inherited only where every test the patched run failed also failed at
+  the base (read from a structured report or TAP), or where both runs printed the same output
+  once times and durations are set aside. A patched run that fails a test the base did not is a
+  regression, and the new failures are named (`newFailures`). A failure that can be shown neither
+  way (`attribution: "unattributed"`) leaves the regression dimension unmeasured, never passed.
+- **The offline verifier re-derives these rules with its own implementation.** Since 1.0.3 the
+  live verdict read an inherited failure beside a passing check as a regression pass, while the
+  offline re-deriver still read it as unmeasured, so every such bundle failed its own
+  "independent regression re-derived" check. The re-deriver now recomputes each failed check's
+  attribution and each base-configuration reading from the recorded observations, requires them
+  to match, and applies the new rule to records that carry them. Records from 1.0.3 to 1.0.5 that
+  read an unproven inheritance as a pass still do not re-derive; that pass was not shown.
+- **Vitest test names are relative to the checkout**, so a test is named the same wherever the
+  checkout sits and a verdict posted publicly does not carry the machine's session path.
+
+## 1.0.5 - 2026-09-28
+
+What Comparison B and the study's replay on 1.0.4 found, fixed at the root: an oracle that ran
+outside the project environment and left no record of why it refused, a container removal
+judged on one sample, and two test-check details that named nothing to fix.
+
+### Changed
+
+- **The oracle runs in the project environment the verifier prepared.** `.venv/bin` and
+  `node_modules/.bin` come first on PATH for the oracle, as `uv run` and `npm exec` would. The
+  repository's own checks already call those interpreters by path. An oracle written
+  `python -m pytest ...` otherwise reached the container image's interpreter, which has none of
+  the project's packages, and a patch read as rejected. A directory that does not exist changes
+  nothing.
+- **Every oracle run is kept in the verdict** (`oracleRuns`: the tree it ran on, the command,
+  its exit code, duration and the last 4000 characters of its output). The task dimension was
+  decided from runs whose output was not recorded anywhere.
+
+### Fixed
+
+- **A late container removal no longer refuses the run.** Removal is asked for and observed up
+  to three times with a growing pause before cleanup is called unconfirmed. Under load the
+  runtime finished removals after its 15-second client deadline, and a container gone moments
+  later refused twelve study rows in a row. A container still present after the last round, or
+  one whose creation was uncertain, still refuses.
+
+- **A failed TAP run names the tests that failed**, up to five, quoted as the runner printed
+  them, after the counts. "2 failed" alone named nothing a repair could act on: in Comparison B
+  the model changed nothing in six invocations fed that line for three koa patches.
+- **A failed test check says why when no counted test failed.** jest and vitest summaries count
+  tests, so a file that fails to load or exits the process, or a command the test script runs
+  after the runner, left a failed check reading "978 passed, 978 total". The detail now quotes
+  the runner's test-file line and names the files it marked FAIL, or says the exit came from
+  outside the counted tests. Found on commander.js#1671 in Comparison B.
+
+## 1.0.4 - 2026-09-28
+
+Two findings from the 1.0.3 rollout and the study's replay on 1.0.3, fixed at the root: an
+Action headline that contradicted its own regression dimension, and one more install gap.
+
+### Changed
+
+- **The Action's result follows the regression dimension when every failed check is
+  inherited.** Three of sixteen dogfood repositories read "Not verified" while their verdict
+  said "Regression: pass": their only failures were ones the base commit already had. Such a
+  run is now a regression-only pass with exit status 0; the reason line still says the failure
+  is inherited. A failure the base did not have still refuses. The verdict document's format is
+  unchanged.
+
+### Fixed
+
+- **A uv project's extras are installed too** by the authorized lockfile install
+  (`uv sync --locked --all-groups --all-extras --no-install-project`). 1.0.3 left extras out on
+  the reasoning that they are runtime features. The study's replay on 1.0.3 showed that reasoning
+  wrong for the older layout that keeps pytest, ruff and mypy in a `dev` extra: every row from
+  those projects read "no test ran", and the held-back check was reported as failing on heads
+  where it passes once pytest is present. A lockfile declaring conflicting extras makes uv refuse,
+  and that is reported as a failed install.
+
+## 1.0.3 - 2026-09-28
+
+What the AI-authored pull request study's first complete run through 1.0.2 established, fixed
+at the root: one change of verdict semantics, named as such, and one install gap.
+
+### Changed
+
+- **A failure the base already had no longer leaves the regression dimension unmeasured.**
+  The base control ran the same check at the base commit and found it failing there, which
+  is a measurement about the base, not about the patch; with the patch's other checks
+  passing, the regression dimension now passes and the inherited failure is named beside it.
+  In the AI-authored pull request study, ten of twenty-two adjudicated-correct pull requests
+  had read as refused for a lint or format failure their base carried. A failure the base did
+  not have is still a regression, and a required check that measured nothing still leaves the
+  dimension unmeasured.
+
+### Fixed
+
+- **A uv project's every dependency group is installed** by the authorized lockfile install
+  (`uv sync --locked --all-groups --no-install-project`). Groups are development-only by
+  definition, and a project that keeps pytest in a `test` group rather than `dev` had no
+  runner after a default sync, so its suite read as not run. Extras stay uninstalled.
+
+## 1.0.2 - 2026-09-28
+
+Two more findings from the study's run through 1.0.1, fixed at the root.
+
+### Fixed
+
+- **The container's scratch space is a directory on the host, not a tmpfs.** A tmpfs is
+  charged to the container's memory limit, so with the cap at 2 GB every large lockfile
+  install was killed (exit 137) once its cache passed the cap; sizing the tmpfs in 1.0.1 could
+  not help. Each run now mounts its own directory under the person's `~/.swarm/scratch` at
+  `/tmp`, executable, removed when the run ends, and removed by runtime repair for a run that
+  died between creating and removing it.
+- **A base commit that exists but cannot be checked out is reported with git's own line.**
+  Two paths differing only in case, on a case-insensitive filesystem, leave the fresh checkout
+  dirty and git refuses to switch; the refusal read as "the base commit is not in the checkout",
+  which was false. The last line git printed is now the reason.
+
+## 1.0.1 - 2026-09-28
+
+Four gaps the AI-authored pull request study exposed on its first run through the stable
+release, each on real repositories, each fixed at the root.
+
+### Fixed
+
+- **The container's scratch space holds a real install.** HOME and TMPDIR inside the container
+  are the `/tmp` tmpfs, so npm's and uv's caches live there, and its 256 MB left a lockfile
+  with a native wheel or a large dependency tree failing with "no space left on device". It
+  is now 4 GB, of which only what is written is used.
+- **A pnpm lockfile with no `packageManager` pin installs.** The image carries no pnpm; the
+  lockfile's own format now names the major that reads it (9.0: pnpm 10, 6.0: pnpm 8, 5.x:
+  pnpm 7), that major's latest is fetched through npm for the install command, and the
+  command records which.
+- **A configured Python tool the environment does not hold reads as a check that measured
+  nothing.** `ci` assembles its checks before the install, so the environment could not be
+  read then; when the interpreter itself refuses to start a module, exits 1, and prints only
+  its one-line "No module named", the gate is not applicable with the module named. A test's
+  own output beside those words is a test's words, and the exit code decides as before.
+- **pytest absent from the environment is said as such.** The runner script says so and exits
+  127, and the reading is "measured nothing" with the reason, not "malformed runner output".
+
+## 1.0.0 - 2026-09-28
+
+The first stable release of `swarm-verify`. Everything below shipped through nine prerelease
+candidates, each rolled out across sixteen owned repositories and three README-only onboarding
+simulations, with every defect they found fixed at its root and named here.
+
+### Added
+
+- **`swarm-verify` with no subcommand is `check`**: discover the declared checks from the
+  manifests, run them unattended (no terminal on stdin, `CI=true` in the child environment),
+  and report five conclusions apart: whether the command ran, what the checks found, how
+  commands were contained, whether any requirement was judged, whether any check was
+  challenged. Exit codes: 0 regression-only pass, 1 a failed check, 2 an unreadable command
+  line, 3 cancelled, 4 incomplete. `--explain` previews, `--json` emits `swarm.check.v1`.
+- **Requirement-level challenges** for goal contracts: `ci --challenges off|report|required`
+  runs a base control per requirement, mechanical mutations of the changed lines witnessed by
+  the repository suite, sealed fixtures the contract declares, and names missing obligations.
+  Records `challenge-plan-v1`, `challenge-run-v1` and `challenge-verdict-v1`; the bundle's own
+  verifier re-derives every verdict independently. `required` refuses with `challenges-unmet`.
+- **Python changes are challenged too**: the mutation set reads Python's statement forms
+  (comparison inversion, condition negation, operand swap, `return None`, `= None`), masks
+  literals and comments, sets test files aside, and every Python mutant is shown to parse with
+  Python's own parser before it runs.
+- **The GitHub Action as a client of the installed verifier**: `swarm-verify action
+  verify|comment|retain`. The verdict document is signed as a GitHub artifact attestation, the
+  pull request comment is one per PR, updated in place, bound to the head, escaped and
+  mention-free, and a delayed run for an older head posts nothing.
+- **Coverage on Node 22.8 and newer**: the coverage arm names process isolation in the spelling
+  the running Node takes; the floor moves from 24 to 22.8.
+- A verifier platform matrix workflow installs the packed package on Linux, macOS and Windows
+  under Node 22.0.0, 22 and 24.
+- **`swarm-verify verdict`** binds a signed verdict document to the report, summary and bundle
+  beside it and hands the signer question to `gh attestation verify`.
+- **Three integrations, each a client of the installed verifier**: a Claude Code hook that
+  rewrites the agent's recognised test command to `swarm-verify check` (`hook install`,
+  `uninstall`, `run`); a local MCP server over stdio with three bounded tools (`mcp`); and a
+  pre-commit hook that verifies the staged tree in a detached worktree without touching the
+  working tree (`pre-commit`, `pre-commit install`, `uninstall`). Documented in
+  `docs/integrations.md`, each with real positive and negative runs in its tests.
+
+- An authorized lockfile install inside a container reaches the registry for that one
+  command, with lifecycle scripts off, recorded with `network: registry`; the checks that
+  follow run with the network off. Where the image carries no pnpm and the manifest pins
+  `packageManager: pnpm@X`, that exact pnpm is fetched through npm for the install command.
+  The install record is written whether or not a goal contract was supplied.
+- The twelve attack families of the verifier-first assignment are bound to executed controls
+  in `docs/verifier-first/attack-controls.md`, with four new ones: an outside-package change
+  refused by name, a mismatched goal tree refused before any record, an unfinished challenge
+  intent refusing the next challenge, and a revised contract deriving a fresh verdict.
+- The stable 1.x contract is written down in `docs/verifier-first/contract.md`.
+
+### Fixed
+
+- **A container image that is not on the machine is pulled once, before the first container.**
+  `docker create` against an absent image pulled it inside the command's own deadline, and a
+  probe's deadline is seconds, so on a fresh machine (a GitHub runner with the Action) every
+  container timed out while the image downloaded and the run stopped as "cleanup could not be
+  confirmed" without saying why. The backend now inspects the image and pulls it with its own
+  ten-minute allowance before the command's deadline starts (a pull inside the deadline left a
+  containment probe no time at all and the run refused as "isolation unknown"), names a pull
+  that fails, and a creation that timed out or did not start is named in the cleanup message
+  with the runtime's last line. A probe that timed out is named as such rather than as one
+  that "could not start (null)".
+- **The vitest runner reports to a file and prints only that file.** Four of sixteen rollout
+  repositories had their whole suite read as "malformed runner output" because their tests
+  logged, or their test script printed its own verdicts, into the stdout the JSON reporter
+  used. Stdout is muted while the suite runs; the report's bytes are all that is printed,
+  whole: the first cut of this wrote at exit and lost everything past the pipe's 64 KiB
+  buffer, so every large suite read as malformed instead.
+- **Manifest scripts run through npm whichever manager installed the lockfile.** pnpm is
+  fetched for the install command alone and is not in a trusted image, so every pnpm
+  project's typecheck, lint and build read "the command is not installed" in a container. A
+  script that itself calls pnpm still needs pnpm and says so. Both the `check` plan and the
+  `ci` gate set compose the scripts this way.
+- **When every check stood down, the advice lists why each did**, and distinguishes a runner
+  that is not installed (install the dependencies) from a toolchain the verifier does not
+  drive (unmeasured, not a pass) and from a manifest that declares no check.
+- **Containment probes are shell scripts.** An image built for a Python project carries no
+  node, so every probe "could not start" and the run refused with isolation unknown. The read
+  and write probes use `cat` and `printf`; the network probe attempts the connection with node,
+  else python3, else bash's `/dev/tcp`, and an image with none of them is recorded as
+  unmeasured, never as contained.
+- **The verdict's advice names what happened.** A failed or unmeasured required check was
+  advised as "the repository's own suite passed"; it now names the check that failed on the
+  patch and passed at the base, or the required check that measured nothing.
+- **A configured Python tool the environment does not hold is an unavailable check, not a
+  failed one.** tavern configures mypy, its synced environment holds none, and `python -m
+  mypy` exited 1 with "No module named mypy", read as the typecheck failing on a clean
+  checkout. Presence is read from `.venv`'s site-packages without running anything; the
+  check then says which tool to add and sync. Without a `.venv` nothing is claimed.
+- **A failed check shows the last lines the command printed**, in `check`'s report and its
+  JSON (`output`), so "the command exited 1" comes with what a terminal would have shown.
+- **Two messages a stranger met on a first run say what they mean.** The file-set check in a
+  run with no declared file set no longer speaks of "no planner" and "no agent"; it says no
+  file set was declared and what changed. The per-run signing key notice says what a per-run
+  key means and that it is ordinary on a headless machine.
+- **A vitest file that repeats a test title no longer makes the whole suite unmeasured.**
+  The second occurrence is named by its position; the runner accepted the title and so does
+  the reading. Found on depose, where one repeated `it` hid 383 tests.
+- **The tests reading says what its counts are and are not** in words a first-time reader
+  can follow, instead of "ratchet counts" and "base-control attribution".
+- **An image pull is attempted three times** before the run stops, since a hosted runner saw
+  Docker Hub reset the connection once; the last failure's own line is what the error names.
+- **A Python checkout whose ignored caches exist no longer fails to stage.** The scratch
+  index named `__pycache__`, `.pytest_cache`, `.mypy_cache` and `.ruff_cache` as exclude
+  pathspecs on `git add -A`, which git refuses with "paths are ignored" (exit 1) as soon as one
+  of them exists and is gitignored, the ordinary state after one test run; the verifier then
+  told the reader the repository "is not a git working tree". Everything is staged and the
+  caches are removed from the index afterwards. Found by the README-only python simulation.
+- **A git failure inside a repository quotes git's own last line** rather than the command
+  line, and no longer sends the reader to `git init` unless git said the directory is not a
+  repository.
+- **A uv project without a synced environment is a missing prerequisite, not four failed
+  checks.** `uv run --no-sync` exits at once without a `.venv`; `check` now names
+  `uv sync --locked` as the remedy and exits 4, as it does for a missing `node_modules`.
+
+### Changed
+
+- Both binaries exit 2 for a command line they cannot read, as the exit code taxonomy said.
+- The container's scratch mount is executable, so a fetched package manager can run from it.
+- The README leads with the verifier; the coding agent's page is `docs/agent.md`.
+
+## 14.2.0 - 2026-09-27
+
+### Fixed
+
+- Rejected acceptance authority for candidate-controlled Playwright JSON. Sealed browser
+  instruments use harness configuration, immutable image dependencies and exact test identities.
+- Retained unavailable package checks through sealing, final assessment and reviewer reports,
+  separating absent optional tools from unavailable required checks.
+- Provisioned Chromium and the isolated browser runtime in clean Linux gate workflows;
+  nightly failure notifications no longer require an optional repository label.
+- Reopened the prior completion claim after the independent audit. Corrective delivery and
+  release status are tracked in [audit corrections](docs/upgrade-audit-corrections.md).
+
+### Added
+
+- Shared model-free branch/PR snapshot verification, reviewer Markdown and versioned JSON source
+  identities alongside patch mode. Standalone source tarballs build and install without providers.
+- Declared npm/pnpm and uv/existing-venv initialization, explicit package scopes, structured
+  Vitest/pytest outcomes, and sealed CLI, local HTTP and optional Playwright behavior checks.
+- Bugfix, refactor and dependency-upgrade presets on the existing engine, with base controls,
+  narrow manifest authorization, locked preparation and recorded installed versions.
+- One explicitly authorized capability escalation with deterministic failure classification,
+  original budget limits and recovery reconciliation. A configured cloud key grants no consent.
+- Trusted-source Action infrastructure and separate good/bad behavioral workflow controls.
+  Source delivery and package publication remain separate; exact validation is tracked in
+  [the upgrade ledger](docs/upgrade-completion.md).
+
+- **An approval mode, asked once per workspace.** The first terminal run asks whether commands
+  off the shell allowlist may be approved automatically and writes the answer to `swarm.toml`
+  as `[tools] approval`; `--approve ask|auto` and `SWARM_APPROVAL` override it. Under `auto` the
+  run answers an allowlist prompt itself and records it as pre-approved; a derivation-heuristic
+  prompt, the injection defence, asks under either mode. Every prompt gains `a`, always: the
+  call runs and its off-list programs are allowed for the rest of that run, recorded as a
+  `run-allowance` ledger record. The screen's header shows the mode.
+- **The default model is the best served local model for this hardware.** With nothing pinned
+  and no calibration, a run discovers the local backends, ranks what they serve by the
+  shortlist's tier for the probed hardware, prints the choice and its reason before the session
+  opens, and records it as a `model-default` ledger record. A frontier key is used only where
+  nothing local is served; with neither, the run stops and names the remedies instead of
+  defaulting to a provider it has no key for.
+- **A preflight card, and a screen that says what became of each step.** Before the screen goes
+  up, `swarm run` and `swarm session` print four lines to stderr naming the repository and base
+  commit, the manifest, the model with the reason it was chosen, and the approval mode. On the
+  screen, the header's second line reads elapsed, step, tokens, attempt, ratchet, model,
+  approval and workspace, and stays at every width; each timeline row starts with a status
+  mark and the clock time it landed; the gate strip counts passed, failed and not-applicable.
+  A finished run ends on a finish card: the verdict, duration, steps, tokens and cost, then the
+  review page and the bundle as rows a terminal that understands OSC 8 shows as clickable
+  links. Marks fall back to ASCII where the locale is not UTF-8. The plain-line stream that CI
+  and pipes read is byte-identical to before.
+- **`swarm-verify`, the verification path as its own package.** `packages/swarm-verify` builds a
+  binary carrying `verify`, `ci` and `gates` from the same modules `swarm` runs under those names,
+  parsed by the same parser, so an invocation reads the same through either. It carries no
+  provider, worker or screen module and none of the agent's run assembly: a test walks its import
+  closure and the build refuses to emit a crossing. A test verifies a committed bundle through
+  both binaries and compares the bytes. Version 0.2.0 has a separate release workflow; the packaged check
+  packs it, installs it beside the full CLI, and runs the tamper demo through it.
+- **An agent can record a file as temporary, and is held to removing it.** `declare_file_set`
+  and `amend_file_set` take `temporary`: paths created only to investigate, such as a probe
+  script. The blocking `file-set` gate fails while one is still in the change and names it. An
+  amendment can keep one on purpose with `retain`, and its reason then shows on the ledger, in the
+  reviewer's claim and in the gate's output on every pass. Nothing is deleted behind the model's
+  back and nothing reads a filename. Two repairs in the reach-pressure run left a scratch script
+  in their final patch, and membership alone had passed both.
+- **Derived evidence packs losslessly inside the tree.** `scripts/evidence-pack.mjs` packs tracked
+  review pages and run transcripts under a root into one `utf8-file-map-brotli` archive with a
+  digest for every original, removes originals only after the written archive has been unpacked
+  and compared, and `npm run checks` verifies every committed pack. Ledgers, DAGs, manifests and
+  verifiers can never be packed. The tracked tree went from 99.8 MB to about 90.5 MB with every
+  cited bundle still verifying, and the weight check now also requires 6 MB of headroom so the next
+  experiment's evidence has somewhere to go.
+- **A repair is read as what it did to the verifier's findings.** Experiment rows record, per
+  invocation, one of `patch-unchanged`, `findings-identical`, `findings-moved`, `findings-shrank`,
+  `findings-grew` or `satisfied`, with both finding sets, both patch digests and the files that
+  entered or left the patch, plus the same from the fork to the final patch. No score is computed.
+  Generation 3's nine "repairs exhausted" split into six unchanged patches, two that grew the
+  findings by leaving a scratch file, and one that changed bytes and no finding.
+
+### Fixed
+
+- **Reach reports `unmeasured`, not `reached`, for a change it could not measure at all.** A
+  change made only of documentation, types and its own tests skipped every file, left nothing
+  unreached and read as a measurement. Certification treats the two alike; a reader does not.
+  The verdict now carries every file reach set aside with its reason (`setAsideByReach`) and
+  `swarm ci` prints them. One path rule serves reach, the mutant planner, the patch metrics and
+  the PR miner, which had each spelled it separately: the miner still read a tsd type test as
+  source. tsd's `test-d/` directory and the `_test` suffix are recognized, and scratch scripts and
+  JavaScript tool configuration stay judged.
+- **Three campaign runners asked whether the model lists, not whether it generates.** A wedged
+  local server answers `/models` and completes nothing. `pr-task-pass` probed `/models`, and only
+  when a patch was empty, so a partial patch left by a server that died was judged as the model's;
+  the pilot campaign's health effect returned the literal `healthy: true`; `run-campaign` had no
+  probe. All three ask the configured model for a bounded completion after every invocation. The
+  probes are `endpointListsModels` and `endpointGenerates` in a module of their own, the second
+  names why it failed, and `pr-task-pass` keeps an infrastructure attempt apart from `runs`, where
+  it used to mark its task done and get re-judged.
+- **A failed model call records whether the harness cancelled it.** A call cut off at the wall
+  budget and a provider that raised were both `call-failed`. Every unknown-usage invocation of the
+  reach-pressure run was the first kind, and nothing on the ledger said so.
+- **Unknown usage is no longer added in as zero.** The experiment analysis summed a null model-call
+  count as 0; arm scoring priced a crashed run at $0 and printed dollars per accepted patch off the
+  sum; calibration divided all tokens by all time, so a model with one call cut off measured
+  slower than it is. A total is a number only where every part was measured, and the known part
+  is kept under its own name. The core loop's token total is unchanged and now travels with
+  `callsWithUnknownUsage`.
+- **The experiment analyzer cannot overwrite what a run published.** `analyze` wrote its summary
+  and page in place. It now refuses where the bytes differ and writes to `--out` with a
+  `derivation.json` naming the acquisition identity, the identities it was derived with, and every
+  value changed, added or removed. `run` and `score` refuse to write beside rows of another
+  protocol identity, which only `analyze` had checked, and identity is read before a row is
+  parsed. Generation 3's published summary re-derives with no value changed.
+- **The router considers every model the table has measured, not only the last sweep's pair.**
+  The calibration pick's candidates were the models the last sweep ran together, so a model with
+  the best evidence of all on a class was never in the running when a later sweep happened not
+  to include it: on one machine qwen3.6 held the best edit share across two sweeps and the router
+  chose between gemma4 and mistral. The candidates are now the pick's own plus every model the
+  competency table has measured on the task's class, on the same golden set, at or above the
+  floor, restricted as before to what the backend serves.
+- **A turn cut off at the output cap is not a completion.** A live run's only turn was the
+  marker `<channel|>` repeated to the 8192-token cap around a fragment of a plan, with no tool
+  called; the loop read the cut-off text as the model's account of finishing, the gates ran
+  green over an unchanged workspace, and the run ended "work accepted" with nothing written.
+  Two of five samples of the same request against gemma4:31b behind Ollama spiral the same way.
+  A turn cut off at the cap before it called a tool is now sampled again, its text never becomes
+  the plan or the claim, and a run whose every sample is cut off stops as `output-cap`. A stream
+  that repeats one short unit 96 times in a row is cut off there and sampled again, rather than
+  running minutes to the cap. The finish card over an unchanged workspace says nothing was done
+  instead of repeating the assessment, and the header's elapsed counter stops when the card
+  goes up.
+- **A run stops before the session where it could never go green.** A directory that is not a
+  repository, a `--base` that does not resolve, and a repository with no manifest each used to be
+  found out after the model had worked: eight steps in one case, three attempts and 112,000
+  tokens in another, then a first gate saying "add the manifest". `run` and `session` now check
+  the base commit and the manifest first. With no manifest, `swarm` on a terminal offers to add
+  a Node harness (`package.json` running `node --test`, and `.gitignore`) and commit it; off a
+  terminal, or declined, it stops with the remedy named.
+- **An interpreter cache is not a change.** Running a Python test writes `__pycache__`, and the
+  file-set gate charged that as an edit outside the declared set, after which the ratchet
+  rejected the attempt for a gate that had passed before and discarded the work. `__pycache__`,
+  `.pytest_cache`, `.mypy_cache` and `.ruff_cache` are excluded from the change set by name.
+- **A stopped run says what stopped it.** A cancellation during a model call reported "model
+  error: This operation was aborted", the transport's words. The signal now carries the reason
+  (cancelled from the keyboard, or the run's wall budget spent) and the loop reports it.
+- **A refused assessment names only what refused.** The status line read "work refused: work
+  refused: required checks passed, lifecycle interrupted, ..." beside four failed gates. It now
+  reads, for example, "work refused: the gates settled escalated; the run was cancelled".
+- **The macOS keychain is asked whether a default keychain exists before a signing key is
+  added.** `security add-generic-password` with no default keychain raises a dialog and blocks
+  until the store kills it; the probe fails cleanly instead and the run signs with a per-run key.
+
+### Measured
+
+- **Enforcing changed-line reach after visible acceptance changed no held-back verdict in 79
+  mined tasks.** A pre-registered shared-prefix experiment ran each task until the visible half of
+  its oracle first accepted, took that patch as the control, and forked a reach condition from the
+  same workspace that was told which added lines the oracle never executed. Thirteen tasks reached
+  visible acceptance, reach triggered on nine, no repair satisfied it, and the held-back half
+  agreed on every pair: 12 pass both, 67 fail both, zero discordant, exact McNemar p = 1, paired
+  difference 0.0 points, 95% CI [-4.0, +4.0]. Three repairs changed bytes, none narrowed the
+  implementation, two left scratch files behind. Six of the nine refusals named a tsd type-test
+  file no runner executes. The protocol, rows, patches and a report that re-derives from the rows
+  are in [`docs/evidence/2026-09-17/reach-pressure-experiment/`](docs/evidence/2026-09-17/reach-pressure-experiment/report.md).
+  Two earlier generations were stopped on instrument defects and are kept beside it. The instrument
+  defects it exposed, and what closed each without touching a row, are in
+  [`docs/evidence/2026-09-18/reach-pressure-hardening/`](docs/evidence/2026-09-18/reach-pressure-hardening/README.md).
+
+### Changed
+
+- **The verify-only commands are command definition data.** `verify`, `ci` and `gates` are marked
+  as needing no model, and a test runs each through the real CLI with no provider key and the
+  local endpoint pinned to a closed port. `docs/verify-only.md` walks all three through on
+  committed artifacts, with every transcript captured from the command it sits under.
+
+- **Node 22 runs the tool; Node 24 is needed only for the coverage measurement.** The whole CLI
+  refused to start below Node 24 because the changed-line coverage arm spawns node's test runner
+  with `--test-isolation=process`, which Node 22 rejects. Now `engines.node` is `>=22`, every
+  command runs there, and on a Node below 24 the tests gate runs the project's own test command
+  while the coverage arm reports `unmeasured` with the reason named in the gate-run record and in
+  the ratchet's abstention. Unmeasured never renders as a pass, so a change touching covered
+  lines fails the ratchet on that runtime rather than passing quietly. `swarm doctor` reports
+  which Node it found and what that disables.
+
+## 14.1.0 - 2026-09-14
+
+### Added
+
+- **Goal runs now complete through adaptive integration.** `swarm parallel --goal` creates one
+  shared run context before planning, resolves each task contract into enforced paths, tools,
+  checks, runtime policy and budget, and schedules ready work without whole-layer barriers. Merge
+  conflicts, behavioral failures and ratchet rejections retain their candidate commits and create
+  bounded repair attempts against the current integration tree. Missing prerequisites, coupled
+  tasks and repair routes use append-only graph revisions that preserve requirement identities.
+  Final status comes from independent checks of the exact integrated tree. `resume` rebuilds the
+  durable controller state and will not duplicate an accepted landing. The pilot driver and its
+  paired evaluation remain descriptive evidence, not a claim of universal correctness or swarm
+  superiority.
+
+- **The oracle bond asks something of ordinary code.** Its five operators each needed a particular
+  token on the line, and a guard clause, an assignment, a `require` and a callback carry none of
+  them, so `not-bonded` was what a bond said when it had nothing to ask rather than when it had
+  found a strong oracle. Both adversarial false greens are that shape and produced zero mutants
+  between them across every line they add. Three more operators cover the statement shapes that
+  went uncovered: an `if` or `while` condition negated whole, the value a plain assignment or
+  declaration writes replaced by a sentinel, and the statement removed. They are read off the
+  language's own `Statement` productions rather than off the patches that exposed the gap, because
+  operators fitted to the cases that motivated them measure the fitting, and the derivation, the
+  ordering and which tasks were in sample were committed before any of it was implemented:
+  [`docs/oracle-bond-operators.md`](docs/oracle-bond-operators.md). All eight fire on the mined
+  corpus and the three new ones account for 25 of the 34 mutants built. `koa#1999`, the patch a
+  rejected stricter option would have cost because nothing here could change any of its added
+  lines, certifies on `held`.
+- **A deleted statement is confirmed to parse before it is read as evidence.** Statement deletion
+  is the one operator that can leave a file which does not compile, and every oracle refuses one of
+  those, so a bond counting that refusal would credit the oracle with a rejection it never made. It
+  runs `node --check` over the file the patch left and over the file with the line blanked. Where
+  the original does not parse, node cannot read the dialect and so cannot tell a syntax error from
+  a mutant: the operator proposes nothing for that file and the other seven still apply, which is
+  what TypeScript and JSX get.
+- **A vacuous bond names what showed the mutant changed anything.** An oracle accepting a mutant
+  means nothing unless the mutant was a change, and what established that was a person reading each
+  mutated line: an audit that found two equivalent mutants, does not scale, and is not evidence
+  anybody else can re-derive. Every mutant the oracle accepted on a line it ran is now adjudicated
+  by a second detector, cheapest first. The oracle runs again under the same instrumentation reach
+  uses, and a line other than the mutated one that ran in one reading and not the other is a
+  demonstrated difference in what the program did; failing that, the repository's own gates that
+  passed with the patch are run again. Neither seeing anything is recorded as such, and a suite run
+  that was never spent says so rather than answering. What the pair cannot see is named: a mutant
+  that changes only a value on a path that runs either way, in code the project did not have
+  before.
+- **`scripts/deadline-overshoot.mjs`, and gate 9 has a number.** Twenty samples with a real child
+  that outlives its deadline and the whole cancellation tree between them. Worst overshoot 3ms,
+  1.20% of a 250ms budget against the 2% the gate asks, and the budget floor is printed beside the
+  percentage because the percentage depends on both. The wall clock rather than an injected one: a
+  driven clock reports zero by construction, which is the one answer this cannot be allowed to
+  give.
+- **`scripts/task-difficulty.mjs`, and gate 7's blocker was misdiagnosed.** That row said the
+  discriminating corpus has three tasks and more would have to be authored by hand. They are
+  already mined: over the pull-request corpus this model solves 11 of 79, 13.9% [8.0, 23.2], spread
+  across fourteen repositories. A set where the model both succeeds and fails is what a paired test
+  needs and what the golden set does not give. What is left is arm selection in the mined pass and
+  a second run of every task, neither of which is authoring.
+- **The adversarial arm's numbers come out of the same script as the rest.** They were in prose and
+  nothing re-derived them. `separateAdversarialRows` also keeps them out of every other rate by a
+  check rather than by which file a row sits in, since a model shown its acceptance test is a
+  different sampling process rather than a harder subset of one.
+
+- **`swarm ci` refuses to certify on an oracle that never ran the change.** An oracle is evidence
+  only about the code it executed, so the run reports `oracleReach`, and a change the oracle
+  demonstrably skipped is not verified. The unreached lines are named, because "extend the oracle
+  to cover the lines the patch added" is not actionable without them. Reach is measured only where
+  the harness can rebuild the oracle's invocation as an argument vector it controls, per invariant
+  7; anywhere else it reads `unmeasured`, which blocks nothing. koa#1946, the first false green
+  this project found, is refused by it: its oracle never executed lines 270-273 of the file it
+  certified. Across both corpora the check produced no false reds.
+
+### Fixed
+
+- Run the deadline measurement tests after competing test processes finish, retaining the
+  existing timing bounds. A hosted macOS run exposed a 255 ms overshoot under concurrent suite
+  load; that failed observation remains recorded in the implementation evidence.
+
+- **A regular expression is masked like the literal it is.** The claim beside the deletion parse
+  check was that no other operator can leave a file which does not parse, and that claim is why
+  only one operator is checked at runtime. Measured across every operator over 186 real files, it
+  was false: `swap-call-arguments` broke 1 of its 105 on a line splitting on a pattern whose own
+  comma is part of it. `withoutLiterals` masked strings and comments and had never masked a
+  pattern, so the argument scan read that comma as an argument separator and swapped halves of a
+  regex; the same blindness reached every operator that looks for a token, since a comparison
+  inside a pattern is not a comparison. Which of two things a slash is gets settled by what
+  precedes it, wrong only in the direction that masks too much and costs a mutant. Re-measured over
+  the same files: 2,702 mutants and every operator but the deletion at zero.
+- **An empty patch is not charged to the model unless the endpoint answered.** An MLX server ran
+  out of GPU memory mid-batch, inside `mx.eval` over its own prompt cache, and every task after it
+  came back with a zero-byte patch recorded as the model writing nothing. That is the
+  misattribution this corpus was already bitten by in the other direction, when twelve rows the
+  agent had failed on were reported as an oracle nobody could run. `scripts/pr-task-pass.mjs` now
+  probes the endpoint before the pass and again after any empty patch, records nothing where it
+  does not answer, and stops, because every task after an endpoint failure records the same wrong
+  thing. Not under `--rejudge`, which re-derives verdicts from recorded patches and asks no model
+  anything.
+- **`swarm ci` stops printing one sentence for two different absences.** `unshown` said "the oracle
+  accepted, and nothing shows it ran the mutated lines" even where it had run them and no detector
+  could show the mutant changed anything, which sends a reader to inspect coverage that is fine. The
+  line names which absence it is, and a gap names what witnessed it, because a refusal resting on an
+  instrument and one resting on the operator alone are different amounts of evidence.
+- **The deadline overshoot test measured the machine rather than the tool.** It went red inside its
+  own suite. Overshoot is scheduling and does not shrink with the budget, so 2% of a 500ms budget is
+  10ms of headroom and the whole suite running in parallel ate it: 3ms idle, 5ms with eight
+  processes spinning, more than 10ms under the suite. The 2% claim is now made at a two-second
+  budget where 40ms stands against a measured 2 to 5, the absolute number is asserted separately,
+  and gate 9's row says the published 1.20% is an idle-machine number.
+- **The bond stops spending detectors once the verdict cannot change.** Which fact the verdict rests
+  on also decides when adjudicating can stop, and the loop read only one of the two, so detectors
+  were spent looking for something that could not change the answer. One coverage reading and at
+  most one suite run per patch now. That also removed a state the record could not describe
+  honestly, a mutant past the bound on suite runs recorded as not adjudicated while coverage had
+  been asked and been silent.
+- **Two imports nothing in `src/cli-select.ts` used**, and an empty shell argument read as a path.
+  `sed -i '' 's/a/b/' file` is the in-place form every macOS invocation uses and it was refused with
+  "the path is empty", because the quoted empty argument reached a check whose whole subject is
+  paths.
+- **Three attacks that got past the policy guard.** Every security case in this repository was
+  written by whoever wrote the defence, so `src/tools/guard-attacks.test.ts` was written the other
+  way round. Casing: macOS and Windows are case-insensitive by default, so `.ENV` opens `.env`, and
+  every pattern in the credential denylist was case-sensitive. Measured on APFS before the fix,
+  `readFileSync('.ENV')` returns what `.env` holds, and `realpathSync` hands back the casing it was
+  given rather than the casing on disk, so nothing upstream normalized it; `SWARM.TOML`,
+  `server.PEM`, `.git/CONFIG` and a differently cased denied root were the same hole. The denial
+  comparisons now fold, whatever the host filesystem does, because a denial whose verdict depends
+  on which machine ran it is the defect. The workspace containment check does not fold: that one
+  decides whether anything is allowed at all, and folding it is the fail-open direction. A revision
+  and a path in one word: `git show HEAD:.env` prints a credential file and the word the guard
+  ruled on matched no pattern. A path inside a word the shell passes whole: `sed -n
+  'w /home/dev/.ssh/authorized_keys'` writes outside the workspace and the operand was the whole
+  script. A word now offers every path it could open, its whitespace-separated pieces and what
+  follows a colon, each through the same guard, with a URL scheme left alone. Two attacks still
+  succeed and are asserted as succeeding, because a residual nobody can point at is not named:
+  `git config --list` reads a denied file without naming it, and `node -e "..."` is an allowlisted
+  interpreter handed a program.
+- **vitest and `@vitest/coverage-v8` to 4.1.11, for GHSA-82fw-gwwq-j7x9.** A path traversal in
+  `@vitest/mocker`'s redirect mock, CVSS 5.9, published 2026-09-08 against every version from
+  2.1.0. Dev-only and inside the range `package.json` already declared, so the lockfile was the
+  only thing holding the tree on 4.1.10. The coverage provider is pinned exactly rather than
+  ranged, so it moves in the same change or it drifts away from the runner it instruments. This is
+  the first finding the weekly scan has produced that was the world changing rather than the tree:
+  it landed a day after the last scheduled run, and the scan caught it on the next.
+- **A dynamic gate the harness ran itself now counts as having executed the change.** Reported from
+  outside against e261c859b: a project declaring a linter and no test runner settled green over a
+  changed source file that nothing had executed, because the check for "was this change measured"
+  asked only whether some command gate had passed and a linter is one. That reading was replaced by
+  what a gate is capable of establishing, and half the old predicate was left behind: it still
+  asked for a command as well, which discards the behaviour probe, an inspection that imports the
+  changed module and calls its functions. So the probe's classification was dead, and with it the
+  two abstentions added to keep a probe that measured nothing from reading as a pass, and a project
+  with no declared runner spent every attempt and escalated saying nothing had run over a change
+  its own probe had just run. Capability decides it now, and the gate's shape decides nothing. The
+  reported case is driven whole in `src/gates/static-only-project.test.ts`, with the changed file
+  instrumented so that executing it leaves a trace: it settles green only where the trace exists.
+- **The weekly scan reports what somebody can act on.** It read 16,731 files, nearly all of them
+  captured evidence, and 171 of its 177 findings were one rule firing once per copy of the
+  re-derivation script that every exported bundle carries. Editing a bundle to quiet a scanner
+  falsifies the record it exists to be, so those paths are data the scan does not read, and the
+  finding was fixed where it lives: the template in `src/evidence/verifier/rederive.mjs` was
+  missing the suppression its mirror in `src/gates/parsers.ts` already carried. The other five in
+  source are dispositioned at the line that carries each, one of them a fix: a `replace` stripping
+  the first `$` of a pattern where every one of them was meant. The scan now reads 1,050 files and
+  reports nothing. It also stops opening a fresh issue every Monday for findings that have not
+  changed: it comments on the open one, since three identical notifications is how a scan teaches
+  people to close it unread.
+- **An invocation the harness could not read, so it could not measure.** The recognizer that
+  decides whether the harness controls a command read quoted text as bare: a title filter's `|`
+  tripped its shell-operator scan and its spaces split one argument into several, so no real
+  oracle could be vouched. Quoting is read now, which is narrower than a shell rather than wider:
+  nothing expands, nothing is escaped, and an operator outside quotes still ends the reading.
+  Vouching those commands then exposed that a flag whose value is the next argument was being
+  separated from it, which asked node to filter titles by a coverage flag and to run a test file
+  named after the titles.
+- **The patch's own tests are not code the oracle skipped.** An acceptance oracle runs its own test
+  file and never the candidate's, so the candidate's tests are absent from every coverage report by
+  construction. Counting them refused patches that both oracles accept, which is nearly every
+  well-behaved change, since a feature is expected to arrive with its tests.
+- **Reach measured the tree the oracle judged.** Two paths reverted the patch and left it reverted:
+  the vacuity check stashed it and popped it back without checking the pop, which fails when the
+  patch adds a file the oracle overwrites, and attribution reverts it to measure the base. Both
+  meant later measurements were taken on the base commit and reported as though they were about the
+  patch. The revert and re-apply are checked now, and a checkout that could not be put back makes
+  reach abstain rather than measure whatever the tree holds.
+- **`swarm ci` stops what it started.** The command installed no signal handler, so a Ctrl-C or a
+  supervisor's SIGTERM ended the CLI and left its test runners reparented and running: two node
+  processes from an oracle were found holding a checkout open five hours after the run that started
+  them had gone. It takes the same cancellation the run commands use, so a stop reaches the process
+  group rather than only the process.
+- **An oracle that cannot judge is not an oracle that refused.** The corner classifier read the
+  held-back verdict as a boolean, folding "accepts the base too" and "could not be run" into a
+  refusal. Both now classify as unjudgeable and leave the denominator, with the count reported
+  beside the rate. This cuts both ways: it stopped charging the tool for certifying work that
+  nothing contradicted, and it removed two tasks that were being counted as opportunities the tool
+  passed.
+- **Re-judging cannot answer worse than scoring did.** `--rejudge` re-derives verdicts from
+  recorded patches after a harness change, and the order-dependence check lived only in the fresh
+  scoring pass, so re-judging winston#2256 turned a task already recorded as order-dependent into a
+  false green. Both passes go through one function, and it calls the rule that was already in src
+  with tests beside it rather than a third hand-rolled copy.
+
+### Measured
+
+- **False-green rate 1 in 19 valid opportunities: 5.3%, 95% CI [0.9, 24.6]**, from 2 in 22. One of
+  the two is now refused by the reach check; the other two changes are corpus defects found while
+  re-judging, where a held-back oracle that accepts the base was counted as an opportunity the tool
+  passed. The bar is zero, so gate 3 still fails, and 19 opportunities is not 400 tasks.
+
+## 14.0.2 - 2026-09-07
+
+### Fixed
+
+- **`swarm --version` answers instead of asking what value it takes.** The parser reads the word
+  after a flag as its value, and `version` was never registered as a switch, so a question that
+  takes no argument failed with "--version needs a value". This is the defect `--help` had, fixed
+  there and left here; the test beside it says asking for help must not fail for the reason a
+  person is asking for help, and the same holds for asking which build this is. `swarm version`
+  works too, and `--help` still outranks both, because a wrong command line is when help is asked
+  for.
+
+## 14.0.1 - 2026-09-07
+
+### Fixed
+
+- **`swarm ci` no longer charges a patch for a failure the base already had.** Dependencies are
+  installed with `--ignore-scripts`, because install scripts run whatever the registry serves, so
+  a project that builds on `prepare` was verified without its build output and the tests that
+  import it failed. koa routes `import 'koa'` to `./dist/koa.mjs`: 437 passed and 2 failed without
+  the build, 439 and 0 with it, and the two were reported as a regression the patch caused. A
+  failing check is now re-run with the patch reverted on the same checkout, and one that fails
+  both ways is recorded as inherited rather than as a regression, with the build-on-install cause
+  named in the advice. A clean run pays nothing for this, since the base is measured only to
+  explain a failure.
+
+### Added
+
+- **Tasks with two oracles, mined from merged pull requests.** `scripts/mine-pr-tasks.mjs`,
+  `scripts/check-pr-task-viability.mjs` and `scripts/pr-task-pass.mjs`: a merged pull request
+  supplies a base commit, a task, and a specification its own maintainers wrote, whose cases are
+  dealt alternately into a sealed oracle and a held-back one. A candidate is kept only where its
+  tests provably fail on the base source and pass on the merged tree, so nothing is labelled by
+  hand. False-green rate now 0 of 15 across two corpora, 95% CI [0.0, 20.4].
+
+## 14.0.0 - 2026-09-06
+
+### Breaking
+
+- **`swarm ci` no longer reports a patch verified because the project's suite passed.** A suite
+  says nothing broke; it does not say the task was done, because it tests the behaviour the
+  project already had and a task adds behaviour it did not. `verified` now requires both a
+  passing suite and a task oracle that accepts, so a run without `--oracle <command>` exits
+  non-zero with `task: unjudged` and the reason printed. Anything scripted against `swarm ci`
+  exiting 0 needs an oracle passed to it. This is the fix for a measured 22.2% false-green rate,
+  not a tightening for its own sake.
+- **The major version moves because of that one change.** Everything else below is additive.
+
+### Added
+
+- **`swarm ci` reports whether anything broke and whether the task was done, separately.**
+  `regression` says the project's own suite still passes; `task` says a trusted oracle agrees the
+  work was done, and reads `unjudged` where none was given. `verified` requires both, so a run
+  with no oracle is unverified with the reason printed rather than verified by omission. This
+  closed a real 22.2% false-green rate: a repository's suite tests the behaviour the project
+  already had, and a task adds behaviour it did not, so a patch that adds a feature badly still
+  passes it.
+- **`--oracle <command>` supplies that task check.** Nothing infers one. It runs in the fresh
+  checkout after the suite, whether or not the suite passed, so its verdict is readable either
+  way.
+- **`--install` installs the fresh checkout's dependencies from its lockfile**, with install
+  scripts off. Off by default, because installing runs whatever the registry serves. Without it a
+  real project has no test runner in a fresh clone, every check stands down, and the honest
+  answer is that nothing was measured rather than that nothing passed. Reporting the second was a
+  defect, and it is why this exists.
+- **`--isolation <runtime[:image]>` runs commands behind a kernel-enforced boundary**, on docker,
+  podman or nerdctl, with no network, a read-only root, a tmpfs, dropped capabilities, no new
+  privileges, and memory and pid ceilings.
+- **A run measures what it actually executes under, before the first tool call.** The containment
+  self-test runs the escapes rather than reasoning about them: read a host file outside the
+  workspace, write outside it, open a socket. Whatever gets through is named in an
+  `execution-envelope` record and printed. With no kernel-enforced backend the answer is
+  `restricted`, and that is the word used. A backend that refused every escape and could not
+  reach its own workspace is `unknown` rather than `isolated`, since a command that sees nothing
+  is contained and cannot work.
+- **A bundle carries a DSSE envelope over an in-toto statement**, signed over the
+  pre-authentication encoding rather than the payload bytes, so what a run produced can be checked
+  by tooling that never heard of this project.
+- **Durable run state, and the commands to work with it.** `swarm list-runs`, `swarm inspect
+  <run-id>`, `swarm resume`, `swarm retry-step`, `swarm abort` and `swarm repair`, over a
+  `node:sqlite` store in WAL mode with intent recorded before effect and an idempotency key per
+  step, so an interrupted run is taken up rather than started again and a dead run's leases are
+  released rather than held forever.
+- **`swarm gc [--older-than 30d] [--remove]`** says what stored evidence would be removed before
+  removing any of it.
+- **`--json` on a run and on `swarm ci` and `swarm inspect`**: line-delimited JSON, one line per
+  event and one result at the end, each naming its schema.
+- **`confirm_timeout_minutes` under `[interface]`**, so a confirmation nobody answers is refused
+  after thirty minutes rather than holding a run open indefinitely.
+- **The false-green rate is measured against an oracle the tool is never given.** Each
+  real-repository task carries two: one sealed before the runs and handed to the tool, one written
+  from the task text and held back from it. 0 of 11, 95% CI [0.0, 25.9], counting the eleven
+  patches the tool certified. `node scripts/second-oracle-pass.mjs` reproduces it from recorded
+  diffs with no model calls. A single-oracle version of this number was published and withdrawn:
+  the same test on both sides of a comparison agrees with itself.
+- **`scripts/restore-bundle-blobs.mjs` puts offloaded artifacts back**, writing a file only where
+  its content hashes to the digest the bundle names.
+
+- **A run has a wall budget of its own.** `--max-wall-minutes <n>`, or `max_wall_minutes`
+  under `[budgets]` in swarm.toml, bounds the whole run: the first loop and every auto-resolve
+  attempt draw from it, the attempts stop when it is spent, and the run goes on to its final
+  gates and its bundle with the budget recorded on the chain as a `session-budget` record.
+  Before this each loop had its own half hour and the run as a whole had no bound, which is how
+  a run measured inside a forty-five minute container could outlast it and leave nothing: the
+  campaign's first arm lost seven runs that way. Unset, nothing changes: each loop keeps its
+  half hour.
+- **The criteria a run is measured by are sealed on the chain before the model is asked for
+  anything.** Every gate with its severity and the rule that reads it, the budgets, the attempt
+  cap and the ratchet arms, as one record written before the loop, and the embedded verifier
+  holds every gate run to it: a gate the seal does not name, a severity or rule it did not
+  declare, or a sealed gate missing from the final attempt fails verification. A bundle of the
+  new format that carries gate runs and no seal is refused, since that is the one way to dodge
+  the check; a bundle that ran no gates has nothing to be held to.
+- **Every passing gate is bonded.** After the fixed point, each gate that passed is handed one
+  added file it has to refuse, a failing test, a TODO, a credential-shaped token, a file outside
+  the declared set, a change over the budget, and the result is a `gate-bond` record carrying
+  the observation. A check that refused it held. A check that passed over a bond it demonstrably
+  saw is vacuous, which makes a blocking gate's run not green whatever the cycle said, and the
+  exit code says so. A command that passed where nothing shows it read the bond is unshown,
+  named as such and never promoted to held. A gate with no bond is recorded as not bonded. The
+  review page carries the bond beside every gate and paints a vacuous pass red.
+- **A bundle carries `rederive.mjs` beside `verify.mjs`.** Where the verifier asks whether a
+  bundle is what it says it is, the re-deriver asks whether a third party applying this tool's
+  rules would reach the verdicts it records: every gate status from the recorded exit code and
+  output under the rule the record now names, every ratchet decision from its recorded
+  measures, every bond from its observation, every claim from its predicate, and the gate runs
+  from the seal. What it cannot re-derive from the bundle alone, it names rather than agrees
+  with. Dependency-free, like the verifier, and parity-tested against the parsers it mirrors.
+- **Routing by a competency table, class by class, and never by interpolation.** `swarm
+  calibrate` now writes, beside its pick, what each model was measured to do on each class of
+  task: executed repeats and the ones whose gate passed, per sweep, read off the sweep's own
+  `calibration-run` records and folded across sweeps of the same golden set. A task's router
+  asks the table for its class before the reward log has enough samples to say anything, and
+  where a candidate has at least six executed runs on that class the best gate share stands
+  as the default, recorded as a `competency` assignment with the counts it was chosen on. Where
+  no candidate clears the floor, or none has an entry for the class at all, the table abstains
+  by name and the calibration pick stands as before; a model's showing on one class is never
+  read as evidence about another.
+- **A fifty-repository campaign harness, with its criteria sealed before anything was
+  selected.** `campaign/criteria.md` was committed before the first GitHub query, the method in
+  `campaign/methodology.md` before the first run, and `campaign/harness/` sequences the rest:
+  the search saved raw, the candidate walk judged by rules that name the first one failed, one
+  seeded defect per repository accepted only where the repository's own suite passes before and
+  fails after, and one run per arm inside a pinned container on an internal network whose only
+  other member is a forwarder to the model backend. Results are read off the bundle and the
+  tree, never off the run's exit code.
+- **The campaign was run: two local arms over fifty repositories, one hundred runs, ninety-three
+  bundles that verify.** Fifty seeds in five languages, each a repository whose own suite passed
+  before the seeded line and failed after it, run once per arm under a forty-five minute
+  budget. On qwen3.8:27b over rapid-mlx, forty-three runs executed and every bundle verifies,
+  twenty-six of them fixing the seed; seven ran out of budget without a bundle. On
+  qwen3.6:35b-a3b over Ollama, all fifty executed and verify, thirty-nine fixing the seed, at a
+  median of nine minutes against sixteen. The frontier arm was not run, because the key it
+  needs has no balance, and the report carries it with zero runs rather than leaving it out.
+  `campaign/results/report.md` is generated from the result records alone, the bundles are
+  under `campaign/corpus/`, and the method with its dated amendments is in
+  `campaign/methodology.md`. The campaign measured the CLI packed on 2026-09-02 and stayed on
+  it while two defects it exposed were fixed in the tree: a shell allowlist that refused every
+  toolchain but node's, and a model call with no deadline.
+- **Two scheduled proofs on GitHub Actions.** A nightly one runs the suite and the fuzz smoke
+  from a clean clone, then verifies the committed reference bundle with its own verifier and
+  refuses a one-byte copy of it, uploading the transcript. A weekly one installs a pinned
+  Ollama on the runner, seeds a workspace whose test fails on a real defect, runs one task
+  through the built CLI, and verifies the fresh bundle in the same job; the task outcome is
+  recorded and never judged. Neither continues on error, and a scheduled failure of either
+  opens an issue with the run link.
+
+- **A debug copy of what a local backend was actually sent and actually said.**
+  `SWARM_TRANSPORT_TRACE=<path>` writes the raw request body and every raw response frame of
+  every local call to a JSONL artifact, before anything parses them. Off with no path, which is
+  the default: the artifact holds whole prompts and whole completions unscrubbed, so it is not
+  the ledger and not a thing to leave running. It exists for one question the assembled response
+  cannot answer, which is whether a turn that arrived empty was empty on the wire, dropped
+  during stream assembly, or genuinely empty from the model. The response body is teed rather
+  than buffered, so streaming timing is unchanged and the first-token measurement stays real.
+- **A screen for `swarm calibrate`.** A three-model sweep is 180 runs over roughly three hours,
+  the longest thing this tool does, and it wrote plain progress lines and nothing else. It has a
+  view of its own now, because a sweep has none of the things the run screen is built around: it
+  has a grid. Runs finished out of runs planned, the run in flight, a row per model in plan
+  order with green counted over executed runs rather than attempted ones, abstentions named by
+  the reason code the harness recorded, and the last few outcomes. No estimate of time
+  remaining, which would be a prediction people plan around, and no keys, because a sweep has
+  nothing to scroll. Off a terminal it writes one line per finished run in the same words, so
+  the log and the screen stay one account of the run.
+- **An index over the evidence column of the review page.** Records are grouped by turn and
+  folded by default, the per-record digest moved into the expanded payload where the reviewer
+  resolving a claim through it is already looking, and the column opens with how many records
+  there are, how many of each type, a button per type and a search box. The 08-23 calibration
+  bundle is 3,716 records; before this there was no way to find anything in it. A rendering
+  change and nothing else: no record changed, and four existing bundles verify unaltered.
+- **A behaviour probe over changed functions.** A function that answered several ways at the
+  base commit and answers one way now is reported by a blocking gate. Reading the text will
+  never tell a stub from a correct constant, and running it does not have to: the comparison is
+  between two measured variances rather than a judgement about what a function is for. Quiet on
+  a function that was always constant, one that takes no arguments, and one that now refuses
+  every input, which is a tighter signature rather than a missing body.
+
+- **Workers that read what the others have already tried.** They ran side by side and saw
+  nothing of each other, so two could declare the same file and one could spend its whole
+  attempt cap on a gate that had already refused the same fix on the chain next door. They
+  coordinate now through the thing they were already writing: a `read_trail` tool projects
+  typed signals off the peers' ledgers, which files are claimed, which gates failed and how
+  often, which attempts the ratchet rejected, which approaches are spent. No daemon, no bus,
+  nothing anyone writes through, and no read of a chain but the peers' own. Nothing it returns
+  can render green: every signal comes from a record rather than from model text, every line
+  names the peer it is about, and no signal kind reports a success. A run that is not parallel
+  is offered none of it and sends the same tools and the same prompt, byte for byte.
+- **`--redundancy <n>`: try each task several ways and land the best of them.** Attempts
+  diverge because each carries a seed derived from the task, the model and the attempt number,
+  so a report can re-derive them. The winner is chosen by a comparator over harness-measured
+  numbers with the precedence written down, never by asking a model which answer it likes: four
+  earn-it dimensions above every do-less one, a dimension nothing measured abstained on by
+  name, and a dimension only one side measured won by the side that measured it. Counting
+  happens over a file universe fixed across the attempts first, so opening a large test file
+  gains the opener nothing. The whole ranking goes on the chain, losers and their reasons
+  included. A refused winner falls to the next attempt only where the integrated gates were
+  what refused it.
+- **`--goal <text>`: the tool breaks the goal into tasks itself.** A planner run reads the
+  workspace with read-only tools and declares a task graph, which is checked before anything
+  runs for unique ids, resolving dependencies, no cycle, and files that two unordered nodes
+  do not share. The graph is a ledger record written before the first worker starts. Nodes
+  land layer by layer, each layer branching from the tree the one before it left, and a node
+  whose parent did not land is recorded as blocked rather than run against a tree that lacks
+  it. `--tasks` also reads a JSON graph now, so a hand-written one and a declared one are the
+  same artifact. The claim says every declared node ran and landed and says nothing about
+  whether they satisfy the goal, which this tool does not check and says so.
+- **`--concurrency <n>`,** capping how many workers hold a worktree at once. It defaults to
+  one against a local model server, because every worker in the run is asking one resident
+  model for tokens, so the parallelism buys nothing and costs the memory the model lives in.
+  Against a model served elsewhere it defaults to four and deliberately does not grow with the
+  hardware: what the machine is being asked for is N copies of the project's test suite, and a
+  bigger machine does not make those cheaper. The fan-out was unbounded before this, at any
+  redundancy.
+
+### Changed
+
+- **Bundle format 2.** A format 2 bundle carries the sealed criteria, a bond per passing gate,
+  and the re-derivation script; every gate-run record names the rule that read it. Format 1
+  bundles are still read, replayed and verified, and the four committed ones verify unchanged
+  under the new verifier, which reports their lack of a seal as predating sealing rather than
+  as a defect.
+- **The corpus replay reads the v12 falsification corpus from the `v12-final` tag.** It named
+  `main`, which held the v12 tree until `main` was moved onto this lineage; from then on the
+  three replay tests skipped under a green run, on CI and on any clone that had moved its
+  `main`. A tag is the one name that does not move, and the checkout test now pins that the
+  corpus was reached rather than allowing a skip.
+- **The reports the ratchet reads come off streams the harness owns, not files.** The first fix
+  for the counter forgery below had the runner write reports to paths the harness named under
+  the session store. An adversarial pass took that apart: a destination is an argument of the
+  spawned process, so `ps -p $PPID -o command=` hands it to any test that asks, and the file is
+  writable by anything running as the same user, since the writer is the same uid. Getting the
+  harness to read a forgery did not work, because it reads as soon as the runner exits and won
+  that race every time; what did work, four times out of four, was destroying both measures, and
+  an abstention is not a violation. So there is no file: tap goes to stdout and lcov to stderr,
+  and under process isolation a test's own output is captured by the parent and folded into the
+  reporters' streams as escaped comments. The base-control result had the identical hole and
+  gets the identical fix.
+- **The base a run is measured against is resolved to a commit before anything reads it.** HEAD
+  is a symbolic ref spent at the moment each base-side question is asked, and `git` is on the
+  default shell allowlist, so one unconfirmed tool call moved it. Measured on a scratch
+  repository with two of three tests deleted in the tree: after a `git commit -am` the base
+  declared 1 test instead of 3 and the change set held 0 files instead of 1, so the deletion the
+  ratchet exists to catch stopped being a deletion. The parallel path already resolved its base
+  before handing it to any worker; this is the single-run path held to the same thing.
+- **The ratchet's collected and skipped test counts come from a report the runner wrote, not
+  from what it printed.** Node's default reporter passes a test's own `console.log("# tests
+  999")` through ahead of its own counters and the counter reader took the first match, so four
+  print statements in one test file reported 999 collected for a suite of one. That number fed a
+  blocking arm. Where the harness can vouch for the invocation it now asks node for TAP at a
+  path of its own and counts result points there, which a test cannot print into existence.
+  Where it cannot vouch for the invocation both measures are null and the ratchet abstains on
+  them by name, which is stricter than the reading it replaces.
+- **An empty assistant turn is recorded as an abstention rather than as a run of the model.**
+  The harness classifies every turn as it crosses into the ledger and stamps the verdict on the
+  record, so a repeat whose only turn arrived empty reports `abstained` with a machine-readable
+  reason instead of being scored against the model as a wrong answer. Two calibration bundles
+  had been scored with those folded in. Calibration now reads `executed` off the records rather
+  than off the loop's own counter, because a reviewer re-deriving that number has the records
+  and not the loop.
+- **A seed is recorded with whether the backend took it.** Ollama and rapid-mlx both accept a
+  seed field and neither promises to sample from it, and the SDK reports a refused setting as a
+  warning. Those warnings now reach the record, so a seed in a bundle is never read as a seed
+  that made the run re-derivable.
+- **The derivation heuristic reads a shell command as a command.** Its threshold is unchanged,
+  because lowering it flags ordinary commands that mention a filename someone read. What changed
+  is that where an argument parses as a shell command it is also compared as one, with flags
+  dropped and interpreters folded together, so inserting `-fsSL` and swapping `sh` for `bash`
+  no longer rewrites it past the match.
+- **An assertion comparing a value with itself stops counting as an assertion.** The rule was a
+  literal against the identical literal; it now substitutes the file's own bindings first, so
+  `expect(v0.a).toBe(v0.a)` and the spelling that binds one side to a name are both seen. This
+  is arithmetic over expressions and not a judgement about meaning: deciding that two
+  *different* expressions mean the same thing is still refused.
+- **The secret-scan gate reads a credential written in pieces.** Where a change rejoins them,
+  by concatenation or by a template literal, the gate rebuilds the value those lines make and
+  hands it to the detector that already decides about credentials, under the name the change
+  gave it. No second detector and no new threshold. Halves that are never rejoined build no
+  value and are still not caught, which build guide 7.1 says in those words.
+
+### Fixed
+
+- **Every evidence bundle verifies from a clone again.** An earlier weight reduction moved record
+  payloads out of the tracked tree, which stopped 47 of 51 bundles passing their own verifier,
+  four of them cited in the README and `claims.md` in words like "verify.mjs exit 0". Payloads are
+  never offloaded now; only derived artifacts are, and those are regenerated from the records.
+- **The README no longer cites a number the documents behind it withdrew**, and its gate tally is
+  counted from the table rather than from memory.
+
+- **A parallel run now sweeps up the branches it created.** Worker branches outlive their
+  worktrees on purpose, because the merge queue merges from them after the working copy is
+  gone, and nothing outlived the queue: a repository gained a branch per worker per run, for
+  ever. The integration branch is never swept, since that is the result. It prunes worktrees
+  first, which is what stops a run killed part-way from making the next one fail on a path git
+  still believes in.
+- **`--goal` says how the planner stopped, not just that it declared nothing.** Running out of
+  steps, answering in prose, and returning nothing at all want three different responses, and
+  the message treated them as one. It now names the stop reason and the step count and says
+  what to try for each.
+- **Two review-page summaries that trailed off after the colon.** `worker-finished` and
+  `merge-attempt` both asked for a field neither writer emits, so they rendered as
+  `worker-1 finished:` with nothing after it. They read what is actually recorded now.
+- **The weekly scan stopped filing the same 21 findings every Monday.** Data is excluded by
+  path, meaning the secret scrubber's own fuzz corpus and the captured shakedown logs and
+  nothing else; the nine findings in real source carry a suppression naming the one rule and the
+  reason, at the line that carries the finding. Under the workflow's own command it now reports
+  zero and exits 0, so the weekly issue means something arrived that nobody has looked at.
+
+## 13.1.9
+
+### Added
+
+- **A line that says the run is alive, and what it is doing.** A spinner that turns, the current
+  activity, how long it has been going, and while the model is talking, the tail of what it is
+  saying. Nothing on the screen moved before this: the status said `thinking (step 3)` and
+  stayed there, and the only thing that changed was a seconds counter the layout hides below 80
+  columns or 12 rows, so a run taking a minute looked exactly like one that had hung.
+- **The model's words as they arrive.** The stream was already being drained to time the first
+  token and every piece of text was discarded. It is handed on now. One line of it: the whole
+  response lands in the action stream when it arrives and in the ledger for ever, and repeating
+  it as it streams would be the same text three times.
+- **The tool that is running, named while it runs.** Between a tool starting and finishing
+  nothing was emitted, which for a shell command is a screen sitting still for a minute and a
+  half. A tool that finishes inside a frame still draws nothing, which is the right amount.
+
+## 13.1.8
+
+### Added
+
+- **`swarm doctor`, and `swarm doctor --fix`.** What owns the `swarm` command, and repairing it
+  when the answer is wrong. The same failure has happened on two machines months apart and
+  presented as something else both times: an `ENOTDIR` during a global install on one, and on
+  the other a `swarm` with no `select` command. Both were a development checkout linked into the
+  global prefix with `npm link`, which owns the command until it is removed and which npm cannot
+  install over. Nothing here can intercept that at install time, because npm fails before any
+  script of ours would run, so this answers the question afterwards instead. It reports the link
+  and what it shadows, every `swarm` on PATH since the first one wins silently, an executable
+  whose package a failed install removed, and whether the registry is ahead of what is running.
+
+### Fixed
+
+- **A bare word that is nearly a subcommand is refused.** A bare word is the task, which is what
+  makes `swarm fix the parser` work. The cost is that a subcommand a build does not have becomes
+  a task: running `swarm doctor` against a version predating it started an agent on the
+  repository, declared its uncommitted files and wrote a bundle. Nothing was damaged and nothing
+  about it looked wrong. One word that is nearly a command is now refused with the nearest match
+  named, and a task of more than one word is untouched.
+
+## 13.1.7
+
+Found by driving the session through a real terminal rather than a pipe.
+
+### Fixed
+
+- **Enter did not submit at the prompt.** A terminal hands over what it buffered in one read, so
+  the newline arrived inside a longer chunk with no key flag set, and the whole chunk including
+  the control character was typed into the task being composed. A pasted task arrives the same
+  way, so everything before the newline is now typed and the newline still means run it.
+- **The screen still showed a plain `DONE` for a run that changed nothing.** The gate strip
+  cannot tell passes over work from passes over an empty diff, and a model answering in prose
+  stops for the honest reason `completed` having done nothing. It now reads `DONE, but no files
+  changed`. The plain path already said this above its gate table.
+
+## 13.1.6
+
+A session, and the evidence a person reads.
+
+### Added
+
+- **`swarm` with no task opens a session.** One process, one ledger, tasks typed one after
+  another, each continuing the conversation the last one left. The screen keeps what each
+  finished turn came to, so it does not forget between them. `swarm "task"` is unchanged.
+- **Each turn is measured on its own.** A turn ends by recording where it left the tree, so the
+  next turn's gates see that turn's changes and not the ones before it. Without it the second
+  turn is charged with the first's diff and the file-set check calls the first turn's files
+  out-of-set.
+- **The review page says what happened.** The header carries the tasks, the model, whether the
+  loop completed, how long it took and what it cost, above the identifiers it used to open with.
+- **The gate table is in the bundle.** It was printed to a terminal and never written into the
+  page, where the gates had been indistinguishable cards among the model calls.
+- **The change itself is recorded and shown.** Nothing recorded a patch, so the question the
+  page exists to answer, what did this do to my code, meant leaving the evidence and running git.
+
+### Fixed
+
+- **A run that changed nothing reported `DONE`.** The gates run after the loop and each gate
+  event rewrote the status, so the last gate to pass over an empty diff became the last word on
+  a run that built nothing. The stop reason is now its own field, and a cycle that measured no
+  changed files says so before the table.
+- **A second turn measured its own edits as deletions.** `git diff <base>` from the person's
+  index calls a file that is in the base and untracked here deleted. Changes are now measured
+  through a scratch index, which makes the comparison tree to tree and counts a file the agent
+  just wrote as added.
+- **`q` did not leave the view.** It set a flag that three things read after the fact; nothing
+  unmounted the screen, which kept painting. It now comes down and the run reports the way it
+  does off a terminal.
+- **A refused bundle named nothing.** The failing check was read off stderr and the verifier
+  reports through stdout, so every real refusal said "no detail given" at the one moment the
+  panel exists for.
+- Six record types rendered as their own bare name on the page, including the one holding what
+  the run cost.
+
+## 13.1.5
+
+Three fixes, all found by running the tool rather than by reading it.
+
+### Fixed
+
+- **A routed model the backend does not serve reached dispatch.** The router picks from what a
+  calibration measured, and a calibration is a record of a machine at a moment; the backend
+  answering today is a separate fact, and the two drift. A model pulled into Ollama, discovery
+  preferring rapid-mlx, and the router handed over a name that endpoint had never heard of. It
+  answered `Not Found` three times and the run stopped at zero steps. The served list is now
+  asked before dispatch, and a served local model, then a frontier provider whose key is set,
+  answers instead. Substitutions are announced and recorded.
+- **A run that built nothing reported `DONE`.** The gates run after the loop and every gate
+  event rewrote the status line, so the last gate to pass became the last word on the run. A
+  loop that stopped at step zero displayed `DONE gate diff-budget: passed` in the success
+  colour, over an empty diff. The stop reason is now its own field and the outcome leads with it.
+- **`git diff` outside a repository printed its whole option list.** One line of diagnosis
+  followed by a hundred lines about `--dirstat`, with the sentence saying what to do at the
+  bottom. Now one line, and it says to run `git init`.
+
+## 13.1.4
+
+### Fixed
+
+- **The readme printed an install command that cannot work.** It offered
+  `npm install -g github:owner/repo#tag` beside the registry line. `dist/` is not committed, so a
+  git ref builds itself on install and needs this package's devDependencies to do it, and npm
+  does not install those under `-g`: it carries the global context into its git-dependency
+  preparation, places the clone as a root package rather than building a tree inside it, and runs
+  `prepare` without the compiler. The same ref installed without `-g` works and always did. Found
+  by a person running the line the readme printed.
+- **That failure surfaced as `ENOENT` on a path the reader never typed.** The build now names the
+  cause and the two commands that do work, rather than reporting a missing file.
+
+## 13.1.3
+
+The first 13.x on the npm registry. No behaviour changed: this is 13.1.1 with a manifest the
+registry accepts and install instructions that are true.
+
+### Fixed
+
+- **The manifest named no repository, so a signed publish was refused.** `npm publish
+  --provenance` signs a statement naming the repository the tarball was built from, and the
+  registry checks it against `repository.url` before it accepts the write. That field was
+  absent, so the statement said one thing and the manifest said `""`, and the registry answered
+  `E422` after the provenance had already been written to the transparency log. Nothing in the
+  source tree can show this, so a test now asserts the field.
+- **The package told its own readers it was not published.** The install section named a git ref
+  and said the registry served 12.0.0, because that is what was true while the credential was
+  missing. Those words ship inside the tarball, so publishing 13.1.1 as it stood would have put
+  a package on the registry whose first section denies being there. `npm install -g
+  swarm-orchestrator` is the first line again.
+
+### Added
+
+- A description, keywords, a homepage and a bug-tracker link, which is what the registry page
+  renders around the readme and what a search on the registry matches against.
+- Three flags the readme never listed, `--base`, `--max-steps` and `--local-endpoint`, and a
+  pointer to `swarm --help` for the calibration flags it still does not list.
+
+`13.1.2` was tagged and refused by the registry for the manifest reason above. The tag is left
+where it is rather than moved, because it names a real tree and the refusal is part of the
+record.
+
+## 13.1.1
+
+A packaging fix. Nothing about how the tool runs changed.
+
+### Fixed
+
+- **Installing from a git ref produced a package with no binary.** `dist/` is not committed and
+  is built by a script, and npm runs `prepare` for a git install but never `prepublishOnly`.
+  Only the latter was declared, so `npm install github:moonrunnerkc/swarm-orchestrator#v13.1.0`
+  resolved, reported no error, and left a directory with no `dist/` and no `swarm`. This is the
+  install path that matters while the registry publish is blocked, and it was the one that did
+  not work.
+
+## 13.1.0
+
+A run you can watch and drive, and an end-of-run panel that shows you what it produced.
+Everything below is additive: no flag, command or output changed meaning, and the plain-line
+stream a pipe or a CI job reads is byte-for-byte what it was.
+
+### Added
+
+- **An interactive terminal interface.** On a TTY, a run draws a single screen: the task and
+  the model in a header, the plan, the action stream, the gate strip, and a status line.
+  Scroll it, expand a row to the whole tool input and output and the ledger record it came
+  from, filter it, freeze the render without touching the run, and press `?` for the keymap.
+  Two exits that are not the same thing: `q` leaves the view and lets the run finish, `ctrl+c`
+  cancels the run.
+- **An end-of-run evidence panel.** What the run produced, named by what each artifact is for,
+  with the record count and how many claims the harness verified against how many it refused.
+  One keystroke opens the review page, another the bundle directory. It says the bundle
+  verified only if the bundle's own verifier ran in that session and exited 0, and it names the
+  exit code; otherwise it says "not verified in this run" and prints the command.
+- **`swarm review <bundle directory>`**, which shows that same panel for any bundle already on
+  disk, running the same verifier. Nothing is re-run.
+- **`swarm --help`**, which used to report that `--help` needs a value.
+- **Screen flags**: `--no-tui` for plain lines even on a terminal, `--color` and `--no-color`,
+  `--open-evidence` and `--no-open-evidence`. Opening is opt-in and never happens off a
+  terminal.
+- **Three `swarm.toml` tables**: `[interface]` (`tui`, `color`, `open_evidence`), `[theme]`
+  (a colour per slot), and `[keys]` (a key per action). Flags win over the file, as everything
+  else does. An unknown key, colour or action is a typed error naming what was wrong and what
+  would have been accepted.
+- **Sampling settings on the wire for a calibration run**: temperature and top-p pinned and
+  recorded in every model-call record, with a seed per repeat. An ordinary task run sends
+  nothing and is unchanged.
+
+### Fixed
+
+- **Two consumers of one stdin.** The CLI built a readline interface on `process.stdin` while
+  Ink held the same stdin in raw mode. A confirmation firing mid-run raced them, which is the
+  least acceptable place to drop a keystroke. Confirmation is now a component inside the
+  running screen, answered by the same key dispatcher.
+- **The curated model shortlist and pricing table answered 404.** Both URLs named the branch
+  `main`, which is the v12 lineage and carries neither file, so `swarm select` fell back to the
+  bundled snapshot on every machine.
+- **A missing verifier read as a refused bundle.** Node exits 1 on a module it cannot find,
+  which at the exit code is the same as a verifier that ran and said no. One is the absence of
+  a verdict.
+- **Local models reported no tokens, and so cost nothing.** An OpenAI-compatible server streams
+  a usage chunk only when the request carries `stream_options.include_usage`, and the local
+  provider was not built to send it. Every local run recorded `outputTokens: 0`, so throughput
+  was unmeasurable and every run priced at `$0.0000`, which the routing reward is built from.
+  The router had been learning that local models are free.
+- **One keychain message for three different failures.** A key that could not be read, an entry
+  holding something that is not a key, and a keychain that would not accept a new one now say
+  which happened and what to do about it. The middle one names the service and the account, and
+  says the entry can be deleted.
+
+## 13.0.0
+
+Same package name, different product. If you installed `swarm-orchestrator` before this
+release, read this before upgrading: v13 is not a newer v12, and nothing in v12's interface
+survives.
+
+### What v12 was, and what v13 is
+
+v12 was a PR auditor. It ran as a GitHub Action, read pull requests opened by AI coding
+agents, looked for cheat patterns (test relaxation, mock-of-hallucination, assertion strip,
+no-op fix), posted findings as a comment, and gated merges.
+
+v13 is a coding agent. It does the work rather than auditing somebody else's, and every
+claim it makes about that work resolves to machine-captured evidence in a tamper-evident
+ledger. The two share a name and nothing else: no shared history, no shared interface, no
+migration path from one to the other, because there is nothing to migrate.
+
+### Breaking
+
+- **The `swarm-audit` and `swarm-orchestrator` binaries are gone.** One binary now, `swarm`.
+- **The GitHub Action is retired.** v13 ships no `action.yml`. There is no v13 equivalent of
+  the merge gate, and none is planned.
+- **Node 24 or newer.** v12 asked for 20. The floor is not stylistic: the coverage cycle
+  spawns the test runner with `--test-isolation=process`, which Node 22 rejects as a bad
+  option, so on anything older that arm measures nothing.
+- **The histories share no merge base.** v13 is a separate lineage. `git log` will not show
+  you v12's commits from here.
+
+### If you are using v12
+
+Stay on it. It is tagged `v12-final` and that tag is not going away.
+
+    npm install swarm-orchestrator@12.0.0
+
+That is the newest v12 the registry carries. The `v12-final` tag is at 12.1.1, which was
+tagged but never published, so `@12.1.1` does not resolve; install from the tag if you need
+exactly that tree.
+
+For the Action, pin the tag rather than a branch, since the default branch is moving to the
+v13 lineage:
+
+    uses: moonrunnerkc/swarm-orchestrator@v12-final
+
+### What v13 does
+
+One task, start to finish, in a git workspace: plan, edit through a chokepoint that records
+every tool call, run the gates, auto-resolve failures under a numeric ratchet, and export a
+signed evidence bundle a stranger can verify without installing anything.
+
+The parts worth knowing before you try it:
+
+- Gate results, claim verdicts and bundle status are computed by the harness. Model prose
+  renders as unverified narrative and cannot render green.
+- The ledger is append-only and hash-chained, signed with a key from the OS keychain.
+- The bundle carries its own verifier. `node verify.mjs <bundle>` needs Node and nothing
+  else.
+- Local model selection is measured on your hardware rather than guessed from model cards.
+
+`README.md` links each of those to a committed artifact of it happening. `docs/claims.md`
+maps every claim to its evidence, and lists what this tree cannot back.

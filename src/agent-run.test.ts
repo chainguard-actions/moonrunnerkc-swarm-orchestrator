@@ -1,0 +1,792 @@
+import { execFile } from "node:child_process";
+import { access, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { promisify } from "node:util";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { type AgentTaskOptions, runAgentTask, systemPrompt } from "./agent-run.ts";
+import { createSystemClock } from "./cli-runtime-inputs.ts";
+import { taskGoalGate } from "./cli-task-goal.ts";
+import type { Clock } from "./core/clock.ts";
+import type { ModelClient, ModelRequest } from "./core/model-client.ts";
+import { createFixedRandom, createTestClock } from "./core/test-doubles.ts";
+import { buildAttestation, signAttestation } from "./evidence/attestation.ts";
+import { bundleSourceFromRecorder, exportBundle } from "./evidence/bundle.ts";
+import { asJsonValue, digestOfBytes, type JsonValue } from "./evidence/canonical-json.ts";
+import { declareGoalContract } from "./evidence/goal-contract.ts";
+import { createRecordingModelClient } from "./evidence/model-call-recording.ts";
+import { recordGoalAssessment } from "./evidence/run-assessment.ts";
+import { type EvidenceRecorder, openEvidenceSession } from "./evidence/session.ts";
+import { createEphemeralSigningKey } from "./evidence/signing.ts";
+import { harnessChildEnvironment } from "./exec/child-environment.ts";
+import { createFileSetRegistry } from "./gates/file-set.ts";
+import { verifyIndependently } from "./gates/independent-verification.ts";
+import { createNodeCommandRunner } from "./gates/node-command-runner.ts";
+import {
+  createFixtureModelClient,
+  type FixtureTurn,
+  respondTruncated,
+  respondWithText,
+  respondWithToolCalls,
+} from "./providers/fixture-provider.ts";
+import { createReadTrailTool } from "./workers/trail-tool.ts";
+
+const run = promisify(execFile);
+const clock: Clock = { now: () => 1_700_000_000_000, sleep: () => Promise.resolve() };
+
+let scratch = "";
+let workspace = "";
+let evidence: EvidenceRecorder;
+
+async function git(...args: string[]): Promise<void> {
+  await run("git", args, { cwd: workspace });
+}
+
+async function write(path: string, contents: string): Promise<void> {
+  await mkdir(join(workspace, path, ".."), { recursive: true });
+  await writeFile(join(workspace, path), contents, "utf8");
+}
+
+const suite = [
+  "import { test } from 'node:test';",
+  "import assert from 'node:assert/strict';",
+  "import { greet } from './greet.js';",
+  "",
+  "test('greets', () => { assert.equal(greet(), 'hello'); });",
+  "",
+].join("\n");
+
+beforeEach(async () => {
+  scratch = await mkdtemp(join(tmpdir(), "swarm-agent-run-"));
+  workspace = join(scratch, "repo");
+  await mkdir(workspace, { recursive: true });
+  await write("src/greet.js", "export function greet() {\n  return 'hello';\n}\n");
+  await write("src/greet.test.js", suite);
+  await git("init", "--quiet");
+  await git("config", "user.email", "agent@example.com");
+  await git("config", "user.name", "agent");
+  await git("add", ".");
+  await git("commit", "--quiet", "-m", "seed");
+
+  evidence = await openEvidenceSession({
+    root: join(scratch, "sessions"),
+    sessionId: "agent-session",
+    clock,
+  });
+});
+
+afterEach(async () => {
+  await rm(scratch, { recursive: true, force: true });
+});
+
+const gateOverrides = {
+  tests: "node --test --test-reporter=tap",
+  lint: "node --check src/greet.js",
+  typecheck: "node --check src/greet.js",
+  format: "node --check src/greet.test.js",
+};
+
+function task(turns: readonly FixtureTurn[], overrides: Partial<AgentTaskOptions> = {}) {
+  const model = createRecordingModelClient(
+    createFixtureModelClient({ modelId: "fixture:worker", turns }),
+    evidence,
+  );
+  return runAgentTask({
+    task: "add a shout helper",
+    workspace,
+    baseRef: "HEAD",
+    maxSteps: 8,
+    attempts: 0,
+    model,
+    evidence,
+    fileSet: createFileSetRegistry(evidence),
+    clock,
+    random: createFixedRandom(),
+    emit: () => {},
+    confirm: () => Promise.resolve("no"),
+    abortSignal: new AbortController().signal,
+    homeDir: scratch,
+    gateOptions: { commandOverrides: gateOverrides },
+    ...overrides,
+  });
+}
+
+/** Declares its file set, writes the change, and stops. What an ordinary run looks like. */
+describe("the approval mode reaches the chokepoint", () => {
+  it("pre-approves a shell-allowlist prompt under auto, and the record says who decided", async () => {
+    await task(
+      [
+        respondWithToolCalls("checking", [
+          { callId: "s", toolName: "shell", input: { command: "true" } },
+        ]),
+        respondWithText("done"),
+      ],
+      { approvalMode: "auto" },
+    );
+
+    const confirmation = evidence.records().find((record) => record.type === "confirmation");
+    const payload = evidence.payloads().get(confirmation?.payloadDigest ?? "");
+    expect(payload).toMatchObject({
+      reason: "shell-allowlist",
+      outcome: "pre-approved",
+      decidedBy: "approval-mode",
+    });
+  });
+});
+
+function goodTurns(contents: string): readonly FixtureTurn[] {
+  return [
+    respondWithToolCalls("declaring", [
+      {
+        callId: "c0",
+        toolName: "declare_file_set",
+        input: { files: ["src/greet.js"] },
+      },
+    ]),
+    respondWithToolCalls("writing", [
+      { callId: "c1", toolName: "write", input: { path: "src/greet.js", content: contents } },
+    ]),
+    respondWithText("done"),
+  ];
+}
+
+const stillGreen = "export function greet() {\n  return 'hello';\n}\nexport const shout = 1;\n";
+const broken = "export function greet() {\n  return 'goodbye';\n}\n";
+
+describe("runAgentTask", () => {
+  it("runs the loop and then the gates, and calls it green when both are", async () => {
+    const result = await task(goodTurns(stillGreen));
+
+    expect(result.loop.stopReason).toBe("completed");
+    expect(result.gates.outcome.settled).toBe("green");
+    expect(result.green).toBe(true);
+  });
+
+  it("is green when the gates are, even where the model stopped short of saying so", async () => {
+    // The auto-resolve exists to carry a run to green that the model did not finish itself.
+    // Reading its stop reason as a second condition let the model's account of itself overrule
+    // what every gate measured, so a tree that passed every gate reported failure to CI.
+    const turns = goodTurns(stillGreen).slice(0, -1);
+    const result = await task([
+      ...turns,
+      respondTruncated(),
+      respondTruncated(),
+      respondTruncated(),
+    ]);
+
+    expect(result.loop.stopReason).toBe("output-cap");
+    expect(result.gates.outcome.settled).toBe("green");
+    expect(result.green).toBe(true);
+  });
+
+  it("is not green when it died before it changed anything", async () => {
+    // Gates over a tree nothing touched pass the way an empty diff has no bugs. A run that
+    // failed at step 17 having written nothing reported success, while the reward log beside
+    // it said "nothing was done and there is nothing to reward" about the same run.
+    const result = await task([]);
+
+    expect(result.loop.stopReason).not.toBe("completed");
+    expect(result.gates.outcome.finalCycle.measures.changedFiles ?? 0).toBe(0);
+    expect(result.green).toBe(false);
+  });
+
+  it("is not green when nothing ran over the code it changed", async () => {
+    // A run wrote 142 lines of Python into a directory with no manifest, so typecheck, lint,
+    // format and tests were all not-applicable, and it reported green over a file that could
+    // not even be imported. Nothing had tried. Not measured is not a pass.
+    const result = await task(goodTurns(stillGreen), {
+      gateOptions: { commandOverrides: {} },
+    });
+
+    const ranACommand = result.gates.gates.some(
+      (gate) =>
+        gate.source.kind === "command" &&
+        result.gates.outcome.finalCycle.statuses[gate.id] !== "not-applicable",
+    );
+
+    expect(ranACommand).toBe(false);
+    expect(result.gates.outcome.finalCycle.measures.changedFiles ?? 0).toBeGreaterThan(0);
+    expect(result.green).toBe(false);
+  });
+
+  it("is not green when the only command gate found nothing to run", async () => {
+    // The gate strip showed no failure, so a second reading of it said green while the run's
+    // own verdict said otherwise, and the exit code followed the wrong one. A run wrote three
+    // files into a workspace whose test command collected nothing and exited 0.
+    const result = await task(goodTurns(stillGreen), {
+      gateOptions: {
+        commandOverrides: {
+          tests: "node -e \"console.log('TAP version 13'); console.log('# tests 0')\"",
+        },
+      },
+    });
+
+    expect(result.gates.outcome.finalCycle.statuses.tests).toBe("not-applicable");
+    expect(result.green).toBe(false);
+  });
+
+  it("is not green when somebody cancelled it, whatever the gates last saw", async () => {
+    const result = await task(goodTurns(stillGreen), { abortSignal: AbortSignal.abort() });
+
+    expect(result.loop.stopReason).toBe("interrupted");
+    expect(result.green).toBe(false);
+  });
+
+  it("is not green when the change the model made fails a gate", async () => {
+    const result = await task(goodTurns(broken));
+
+    expect(result.green).toBe(false);
+    expect(result.gates.outcome.finalCycle.blockingFailures.map((gate) => gate.gateId)).toContain(
+      "tests",
+    );
+  });
+
+  it("records the session opening and closing on the chain it was given", async () => {
+    await task(goodTurns(stillGreen));
+
+    const types = evidence.records().map((entry) => entry.type);
+    expect(types[0]).toBe("session-started");
+    expect(types).toContain("session-stopped");
+    expect(types).toContain("gate-run");
+  });
+
+  it("gives the model the workspace tools and the file-set tools together", async () => {
+    const result = await task(goodTurns(stillGreen));
+
+    const fileSet = result.gates.outcome.finalCycle.runs.find((gate) => gate.gateId === "file-set");
+    expect(fileSet?.status).toBe("passed");
+  });
+
+  it("measures the change against a configured diff budget instead of the built-in one", async () => {
+    const result = await task(goodTurns(stillGreen), {
+      diffBudget: { maxChangedFiles: 12, maxAddedLines: 0 },
+    });
+
+    const budget = result.gates.outcome.finalCycle.runs.find(
+      (gate) => gate.gateId === "diff-budget",
+    );
+    expect(budget?.detail).toMatch(/over budget/);
+    expect(budget?.detail).toMatch(/against 0/);
+  });
+
+  it("runs a declaration whose array argument the model encoded as a JSON string", async () => {
+    // What qwen3-coder emits intermittently through an OpenAI-compatible endpoint. Denying it
+    // costs the whole run: the declaration never lands, the edit happens anyway, and the
+    // file-set gate can no longer pass, because nothing declared the file before it changed.
+    const turns: readonly FixtureTurn[] = [
+      respondWithToolCalls("declaring", [
+        {
+          callId: "c0",
+          toolName: "declare_file_set",
+          input: { files: '["src/greet.js"]' },
+        },
+      ]),
+      respondWithToolCalls("writing", [
+        { callId: "c1", toolName: "write", input: { path: "src/greet.js", content: stillGreen } },
+      ]),
+      respondWithText("done"),
+    ];
+
+    const result = await task(turns);
+
+    const fileSet = result.gates.outcome.finalCycle.runs.find((gate) => gate.gateId === "file-set");
+    expect(fileSet?.status).toBe("passed");
+    expect(result.green).toBe(true);
+    expect(evidence.records().map((entry) => entry.type)).toContain("file-set-declared");
+  });
+
+  it("records the encoding the model sent beside the fields the harness decoded", async () => {
+    const turns: readonly FixtureTurn[] = [
+      respondWithToolCalls("declaring", [
+        { callId: "c0", toolName: "declare_file_set", input: { files: '["src/greet.js"]' } },
+      ]),
+      respondWithText("done"),
+    ];
+
+    await task(turns);
+
+    const payloads = evidence.payloads();
+    const declarations: Readonly<Record<string, JsonValue>>[] = [];
+    for (const entry of evidence.records()) {
+      if (entry.type !== "tool-call") {
+        continue;
+      }
+      // A tool-call payload is an object by construction, which is what the recorder writes.
+      const payload = payloads.get(entry.payloadDigest) as
+        | Readonly<Record<string, JsonValue>>
+        | undefined;
+      if (payload?.toolName === "declare_file_set") {
+        declarations.push(payload);
+      }
+    }
+
+    expect(declarations.length).toBeGreaterThan(0);
+    for (const payload of declarations) {
+      expect(payload.input).toEqual({ files: '["src/greet.js"]' });
+      expect(payload.decodedFields).toEqual(["files"]);
+    }
+  });
+
+  it("leaves the model's completion narrative recorded as narrative, never as a result", async () => {
+    const result = await task(goodTurns(broken));
+
+    expect(result.loop.completionClaim).toBe("done");
+    expect(result.green).toBe(false);
+  });
+});
+
+describe("the trail tool a worker is given and the single-agent path is not", () => {
+  function spyOn(turns: readonly FixtureTurn[]) {
+    const requests: ModelRequest[] = [];
+    const fixture = createFixtureModelClient({ modelId: "fixture:worker", turns });
+    const model: ModelClient = {
+      modelId: fixture.modelId,
+      generate: (request) => {
+        requests.push(request);
+        return fixture.generate(request);
+      },
+    };
+    return { requests, model };
+  }
+
+  const stopAtOnce = [respondWithText("nothing to do")];
+
+  it("offers exactly today's tools when no trail is passed", async () => {
+    const spy = spyOn(stopAtOnce);
+
+    await task(stopAtOnce, { model: spy.model });
+
+    expect(spy.requests[0]?.tools.map((tool) => tool.name)).toEqual([
+      "read",
+      "write",
+      "edit",
+      "list",
+      "search",
+      "shell",
+      "claim",
+      "declare_file_set",
+      "amend_file_set",
+    ]);
+  });
+
+  it("sends the system prompt byte for byte when no trail is passed", async () => {
+    const spy = spyOn(stopAtOnce);
+
+    await task(stopAtOnce, { model: spy.model });
+
+    expect(spy.requests[0]?.system).toBe(systemPrompt);
+  });
+
+  it("adds the trail tool and nothing else when one is passed", async () => {
+    const spy = spyOn(stopAtOnce);
+    const trail = createReadTrailTool({ peers: () => [] });
+
+    await task(stopAtOnce, { model: spy.model, trail });
+
+    const names = spy.requests[0]?.tools.map((tool) => tool.name) ?? [];
+    expect(names).toContain("read_trail");
+    expect(names).toHaveLength(10);
+  });
+
+  it("sends no sampling settings when none are asked for", async () => {
+    const spy = spyOn(stopAtOnce);
+
+    await task(stopAtOnce, { model: spy.model });
+
+    expect(spy.requests[0]?.sampling).toBeUndefined();
+  });
+
+  it("carries the sampling settings an attempt was given through to the model", async () => {
+    const spy = spyOn(stopAtOnce);
+    const sampling = { temperature: 0.7, topP: 0.95, seed: 12345 };
+
+    await task(stopAtOnce, { model: spy.model, sampling });
+
+    expect(spy.requests[0]?.sampling).toEqual(sampling);
+  });
+
+  it("says the trail is a peer's account rather than a result, and quotes no peer", async () => {
+    const spy = spyOn(stopAtOnce);
+    const trail = createReadTrailTool({ peers: () => [] });
+
+    await task(stopAtOnce, { model: spy.model, trail });
+
+    const added = (spy.requests[0]?.system ?? "").slice(systemPrompt.length);
+    expect(added).toContain("read_trail");
+    expect(added).not.toMatch(/verified|green|\bpassed\b/i);
+  });
+});
+
+describe("the run's wall budget", () => {
+  /** Declares, writes the broken change, then never answers again until aborted. */
+  function writesThenHangs(onHang: () => void): ModelClient {
+    const scripted = createFixtureModelClient({
+      modelId: "fixture:hangs",
+      turns: [
+        respondWithToolCalls("declaring", [
+          { callId: "c0", toolName: "declare_file_set", input: { files: ["src/greet.js"] } },
+        ]),
+        respondWithToolCalls("writing", [
+          { callId: "c1", toolName: "write", input: { path: "src/greet.js", content: broken } },
+        ]),
+      ],
+    });
+    let calls = 0;
+    return {
+      modelId: "fixture:hangs",
+      generate(request: ModelRequest) {
+        calls += 1;
+        if (calls <= 2) {
+          return scripted.generate(request);
+        }
+        return new Promise((_, reject) => {
+          request.abortSignal.addEventListener(
+            "abort",
+            () => reject(new Error("aborted at the wall")),
+            {
+              once: true,
+            },
+          );
+          onHang();
+        });
+      },
+    };
+  }
+
+  it("ends a hung loop at the budget, runs the gates, spends no attempt, and still writes the bundle's records", async () => {
+    const ticking = createTestClock(1_700_000_000_000);
+    const budgetMs = 5 * 60_000;
+    const model = createRecordingModelClient(
+      writesThenHangs(() => ticking.advance(budgetMs)),
+      evidence,
+    );
+
+    const outcome = await task([], { model, clock: ticking, attempts: 2, maxWallTimeMs: budgetMs });
+
+    expect(outcome.loop.stopReason).toBe("max-wall-time");
+    expect(outcome.green).toBe(false);
+    expect(outcome.gates.outcome.settled).not.toBe("green");
+    expect(outcome.gates.outcome.attempts).toHaveLength(0);
+    const records = evidence.records();
+    const budget = records.find((record) => record.type === "session-budget");
+    expect(evidence.payloads().get(budget?.payloadDigest ?? "")).toMatchObject({
+      maxWallTimeMs: budgetMs,
+    });
+    expect(records.some((record) => record.type === "escalation")).toBe(true);
+  });
+
+  it("leaves a run without one exactly as it was: each loop its own half hour, no bound over the whole", async () => {
+    const outcome = await task(goodTurns(stillGreen));
+
+    expect(outcome.green).toBe(true);
+    const records = evidence.records();
+    expect(
+      records
+        .filter((record) => record.type === "session-budget")
+        .map((record) => evidence.payloads().get(record?.payloadDigest ?? "")),
+    ).toEqual([expect.objectContaining({ phase: "settled", tokensUsed: outcome.loop.tokensUsed })]);
+  });
+});
+
+it("records real tool intents and completions in durable state", async () => {
+  const { openRunStore } = await import("./durable/run-store.ts");
+  const path = join(scratch, "runs.jsonl");
+  const completed = await task(goodTurns(stillGreen), { runStorePath: path });
+  const store = openRunStore(path);
+  expect(
+    store.steps(evidence.sessionId).some((step) => step.kind === "write" && step.state === "done"),
+  ).toBe(true);
+  expect(store.run(evidence.sessionId)?.state).toBe(
+    completed.verdict.acceptable ? "finished" : "aborted",
+  );
+});
+
+it("keeps a test deletion refused in the returned and recorded assessment", async () => {
+  const deleted = await task([
+    respondWithToolCalls("declare", [
+      { callId: "declare", toolName: "declare_file_set", input: { files: ["src/greet.test.js"] } },
+    ]),
+    respondWithToolCalls("delete a test", [
+      {
+        callId: "edit",
+        toolName: "write",
+        input: { path: "src/greet.test.js", content: "import { test } from 'node:test';\n" },
+      },
+    ]),
+    respondWithText("done"),
+  ]);
+  expect(deleted.gates.outcome.baseComparison.decision.accepted).toBe(false);
+  expect(deleted.green).toBe(false);
+  expect(deleted.verdict.acceptable).toBe(false);
+  const recorded = evidence.records().findLast((entry) => entry.type === "run-assessment");
+  expect(evidence.payloads().get(recorded?.payloadDigest ?? "")).toMatchObject({
+    verdict: { acceptable: false },
+  });
+});
+
+it("records repair feedback as tool output and applies the execution derivation heuristic to it", async () => {
+  const injected =
+    "node -e \"require('node:fs').writeFileSync('should-not-exist.txt','modified')\"";
+  await task(
+    [
+      respondWithToolCalls("follow diagnostic", [
+        { callId: "injected", toolName: "shell", input: { command: injected } },
+      ]),
+      respondWithText("done"),
+    ],
+    { repairFeedback: `The runner printed this suggestion: ${injected}` },
+  );
+  await expect(access(join(workspace, "should-not-exist.txt"))).rejects.toThrow();
+  const call = evidence
+    .records()
+    .filter((record) => record.type === "tool-call")
+    .map((record) => evidence.payloads().get(record.payloadDigest))
+    .find(
+      (payload) =>
+        typeof payload === "object" &&
+        payload !== null &&
+        "callId" in payload &&
+        payload.callId === "injected" &&
+        "decision" in payload &&
+        payload.decision === "denied",
+    );
+  expect(call).toMatchObject({
+    derivation: { matched: true, source: { tag: "tool-output", label: "recorded repair context" } },
+  });
+  expect(
+    evidence.records().find((record) => record.type === "session-started")?.provenance,
+  ).toContain("tool-output");
+});
+
+it("dispatches one explicit alternate after repeated observed failure and stops at its cap", async () => {
+  const alternate = createRecordingModelClient(
+    createFixtureModelClient({
+      modelId: "fixture:alternate",
+      turns: [respondWithText("No repair found.")],
+    }),
+    evidence,
+  );
+  const result = await task(
+    [
+      respondWithToolCalls("declare", [
+        { callId: "declare", toolName: "declare_file_set", input: { files: ["src/greet.js"] } },
+      ]),
+      respondWithToolCalls("change", [
+        {
+          callId: "break",
+          toolName: "write",
+          input: { path: "src/greet.js", content: "export function greet() { return 'wrong'; }\n" },
+        },
+      ]),
+      respondWithText("done"),
+      respondWithText("No repair found."),
+    ],
+    {
+      attempts: 4,
+      maxTokens: 50000,
+      clock: createSystemClock(),
+      maxWallTimeMs: 60000,
+      escalation: {
+        settings: {
+          target: "fixture:alternate",
+          trigger: "repeated-failure",
+          maximum: 1,
+          reservedTokens: 1024,
+          reserveMs: 1000,
+        },
+        target: alternate,
+      },
+    },
+  );
+  const entries = evidence
+    .records()
+    .map((record) => evidence.payloads().get(record.payloadDigest))
+    .filter(
+      (value) =>
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        Reflect.get(value, "rule") === "capability-escalation-v1",
+    );
+  expect(
+    entries,
+    JSON.stringify({
+      outcome: result.gates.outcome,
+      stops: evidence
+        .records()
+        .filter((record) => record.type === "session-stopped")
+        .map((record) => evidence.payloads().get(record.payloadDigest)),
+    }),
+  ).toHaveLength(2);
+  expect(entries).toMatchObject([
+    { phase: "intent", count: 1, effectiveModel: "fixture:alternate" },
+    { phase: "completed", count: 1, unknownUsage: false },
+  ]);
+  expect(
+    evidence
+      .records()
+      .filter((record) => record.type === "model-call" && record.actor === "fixture:alternate"),
+  ).toHaveLength(1);
+  const alternateCall = evidence
+    .records()
+    .find((record) => record.type === "model-call" && record.actor === "fixture:alternate");
+  const prompt = JSON.stringify(evidence.payloads().get(alternateCall?.payloadDigest ?? ""));
+  expect(prompt).toContain("Candidate patch: sha256:");
+  expect(prompt).toContain("Remaining model allowance:");
+  expect(prompt).toContain("Prior checked attempt:");
+  expect(result.green).toBe(false);
+}, 30000);
+
+it.each(["hello", "wrong"])(
+  "binds final goal %s to the recorded worker verdict and attestation",
+  async (expected) => {
+    const baseCommit = (await run("git", ["rev-parse", "HEAD"], { cwd: workspace })).stdout.trim();
+    const contract = await declareGoalContract(evidence, {
+      version: 1,
+      goal: "Preserve greeting",
+      requirements: [
+        { id: "greeting", description: "The greeting is checked", checks: ["greeting"] },
+      ],
+      checks: [
+        {
+          id: "greeting",
+          command: "pinned greeting",
+          author: "user",
+          exposure: "withheld",
+          artifacts: [],
+          behavior: {
+            kind: "cli",
+            cwd: ".",
+            timeoutMs: 3000,
+            maxOutputBytes: 4000,
+            toolchain: "node",
+            network: "inherit",
+            argv: [
+              "node",
+              "--input-type=module",
+              "-e",
+              "import {greet} from './src/greet.js';console.log(greet())",
+            ],
+            stdin: "",
+            exitCode: 0,
+            stdout: [{ kind: "equals", value: `${expected}\n` }],
+            stderr: [],
+          },
+        },
+      ],
+      immutablePaths: ["src/greet.test.js"],
+    });
+    const worker = await task([respondWithText("done")], { baseRef: baseCommit });
+    const independent = await verifyIndependently({
+      repositoryRoot: workspace,
+      baseCommit,
+      patch: "",
+      clock,
+      commands: createNodeCommandRunner(clock, harnessChildEnvironment()),
+      gateOptions: { commandOverrides: gateOverrides },
+      goal: { contract, evidence, tree: "" },
+    });
+    const observed = await evidence.record({
+      type: "independent-verification",
+      actor: "harness",
+      provenance: ["tool-output"],
+      payload: asJsonValue({
+        ...independent,
+        sourcePatchDigest: digestOfBytes(""),
+        sourceBase: baseCommit,
+      }),
+    });
+    const verdict = await recordGoalAssessment(evidence, observed.record.payloadDigest);
+    expect(verdict.acceptable).toBe(worker.green && expected === "hello");
+    expect(verdict.task).toBe(expected === "hello" ? "accepted" : "rejected");
+    const key = createEphemeralSigningKey();
+    const spec = evidence.records().find((record) => record.type === "run-spec-sealed");
+    if (!spec) throw Error("missing run seal");
+    const attestation = signAttestation(
+      buildAttestation({
+        runId: evidence.sessionId,
+        specDigest: spec.payloadDigest,
+        sourceCommit: baseCommit,
+        patchDigest: digestOfBytes(""),
+        chainHead: evidence.head().hash,
+        toolVersion: "test",
+        executionMode: verdict.executionTrust,
+        verdict: { ...verdict },
+      }),
+      key,
+    );
+    const destination = join(scratch, "goal-bundle");
+    await exportBundle({
+      source: bundleSourceFromRecorder(evidence),
+      destination,
+      signingKey: key,
+      clock,
+      attestation,
+    });
+    const verified = await run(process.execPath, [join(destination, "verify.mjs"), destination]);
+    expect(verified.stdout).toContain("bundle verified");
+    expect(verified.stdout).toContain("attestation bound to this bundle");
+  },
+  30000,
+);
+
+it("repairs failed pinned behavior through the existing loop even when regression passes", async () => {
+  await write("package.json", JSON.stringify({ type: "module", scripts: { test: "node --test" } }));
+  await git("add", "package.json");
+  await git("commit", "-qm", "declare native test runner");
+  const baseCommit = (await run("git", ["rev-parse", "HEAD"], { cwd: workspace })).stdout.trim();
+  const contract = await declareGoalContract(evidence, {
+    version: 1,
+    goal: "Expose shout as one",
+    requirements: [{ id: "shout", description: "shout is one", checks: ["shout"] }],
+    checks: [
+      {
+        id: "shout",
+        command: "pinned output",
+        author: "user",
+        exposure: "withheld",
+        artifacts: [],
+        behavior: {
+          kind: "cli",
+          cwd: ".",
+          timeoutMs: 3000,
+          maxOutputBytes: 4000,
+          toolchain: "Node",
+          network: "inherit",
+          argv: [
+            "node",
+            "--input-type=module",
+            "-e",
+            "import * as m from './src/greet.js';console.log(m.shout)",
+          ],
+          exitCode: 0,
+          stdout: [{ kind: "equals", value: "1\n" }],
+          stderr: [],
+        },
+      },
+    ],
+    immutablePaths: ["src/greet.test.js"],
+  });
+  const result = await task([respondWithText("done"), ...goodTurns(stillGreen)], {
+    attempts: 1,
+    baseRef: baseCommit,
+    gateOptions: {
+      commandOverrides: gateOverrides,
+      acceptanceGate: taskGoalGate({
+        contract,
+        workspace,
+        baseCommit,
+        evidence,
+        clock,
+        signal: new AbortController().signal,
+        isolation: null,
+        install: false,
+      }),
+    },
+  });
+  expect(result.gates.outcome.firstCycle.statuses.tests).toBe("passed");
+  expect(result.gates.outcome.firstCycle.statuses["task-acceptance"]).toBe("failed");
+  expect(result.gates.outcome.attempts).toHaveLength(1);
+  expect(result.gates.outcome.finalCycle.statuses["task-acceptance"]).toBe("passed");
+  expect(result.green).toBe(true);
+}, 60000);
