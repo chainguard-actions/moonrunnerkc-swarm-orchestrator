@@ -1,0 +1,51 @@
+name: Test refused on self-hosted runner without allow-self-hosted
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Pre-build the action to warm npm cache
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          node --version
+          npm ci --ignore-scripts
+          npm run build:verify
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          # Do NOT set allow-self-hosted — act runs as a self-hosted-like environment
+          # (RUNNER_ENVIRONMENT is not 'github-hosted'), so the action must refuse.
+          # The self-hosted check throws before writing any outputs, so RESULT will be empty.
+          head: "0000000000000000000000000000000000000001"
+          base: "0000000000000000000000000000000000000002"
+          isolation: host
+          attest: "false"
+          comment: "false"
+          allow-self-hosted: "false"
+
+      - name: Assert action refused due to self-hosted runner
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+          STATUS: ${{ steps.action.outputs.status }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result:  $RESULT"
+          echo "status:  $STATUS"
+          # The action should have failed — the self-hosted check throws before writing outputs
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail on self-hosted runner, got outcome=$OUTCOME"
+            exit 1
+          fi
+          # The self-hosted check throws before writing any verdict, so result is empty.
+          # If result is set, it must be 'refused'.
+          if [ -n "$RESULT" ] && [ "$RESULT" != "refused" ]; then
+            echo "FAIL: expected result='refused' or empty (self-hosted throws before verdict), got '$RESULT'"
+            exit 1
+          fi
+          echo "PASS: action refused as expected on self-hosted runner (result='$RESULT')"

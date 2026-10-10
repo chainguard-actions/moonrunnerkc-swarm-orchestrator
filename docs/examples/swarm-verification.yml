@@ -1,0 +1,19 @@
+# The complete minimal workflow for a new user: one job, one Action, the permissions the
+# signed comment needs and nothing more. Same-repository pull requests get a signed, bound
+# comment. A fork pull request runs the same verification under a read-only token; its comment
+# and signature then report `unavailable`, and the trusted route for forks is
+# docs/examples/swarm-verification-forks.yml.
+name: swarm-verify
+on:
+  pull_request:
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+  attestations: write
+  artifact-metadata: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: moonrunnerkc/swarm-verify@v1

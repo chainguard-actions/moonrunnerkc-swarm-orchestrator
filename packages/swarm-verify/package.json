@@ -1,0 +1,48 @@
+{
+  "name": "swarm-verify",
+  "version": "1.0.0",
+  "description": "Independently check what an AI-written change actually ran, whether its checks could have caught wrong work, and what stays unverified. No model, no key, no configuration.",
+  "keywords": [
+    "ai-code-review",
+    "ci",
+    "github-action",
+    "audit-trail",
+    "cli",
+    "evidence",
+    "hash-chain",
+    "provenance",
+    "quality-gates",
+    "tamper-evident",
+    "verification"
+  ],
+  "homepage": "https://github.com/moonrunnerkc/swarm-orchestrator/blob/v13-main/docs/verify-only.md",
+  "bugs": {
+    "url": "https://github.com/moonrunnerkc/swarm-orchestrator/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moonrunnerkc/swarm-orchestrator.git",
+    "directory": "packages/swarm-verify"
+  },
+  "type": "module",
+  "bin": {
+    "swarm-verify": "dist/swarm-verify.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "node ../../scripts/build-swarm-verify.mjs",
+    "prepack": "npm run build",
+    "prepublishOnly": "node ../../scripts/validate-verifier-release.mjs"
+  },
+  "dependencies": {
+    "smol-toml": "^1.8.0",
+    "zod": "^4.4.3"
+  },
+  "license": "ISC",
+  "files": [
+    "dist/",
+    "README.md"
+  ]
+}
