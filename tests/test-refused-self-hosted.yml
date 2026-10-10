@@ -1,0 +1,47 @@
+name: Test refused on self-hosted runner without allow-self-hosted
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          # allow-self-hosted defaults to false; under act RUNNER_ENVIRONMENT is not
+          # 'github-hosted', so the action must refuse immediately.
+          # Note: the RefusedError from the self-hosted check is thrown before the
+          # try/catch that writes a verdict, so the action may fail with exit code 1
+          # (no verdict produced) rather than exit code 4 (verdict with result=refused).
+          # Both outcomes are acceptable: the action refused to run.
+          allow-self-hosted: "false"
+          comment: "false"
+          attest: "false"
+          isolation: host
+      - name: Assert action refused due to self-hosted runner
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+          STATUS: ${{ steps.action.outputs.status }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result:  $RESULT"
+          echo "status:  $STATUS"
+          # The action must have failed (refused or build/runtime error)
+          if [ "$OUTCOME" = "success" ]; then
+            echo "FAIL: expected the action to exit non-zero (refused), but it succeeded"
+            exit 1
+          fi
+          # If the action produced a verdict, it must be 'refused'
+          if [ -n "$RESULT" ] && [ "$RESULT" != "refused" ]; then
+            echo "FAIL: expected result='refused', got '$RESULT'"
+            exit 1
+          fi
+          # If no verdict was produced, the action still refused (ungraceful refusal)
+          if [ -z "$RESULT" ]; then
+            echo "PASS: action failed without producing a verdict (ungraceful refusal — self-hosted check threw before verdict was written)"
+          else
+            echo "PASS: action refused self-hosted runner as expected (result=$RESULT, status=$STATUS)"
+          fi

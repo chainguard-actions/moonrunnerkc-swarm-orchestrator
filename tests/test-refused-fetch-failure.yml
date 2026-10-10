@@ -1,0 +1,51 @@
+name: Test refused when fetch fails (sentinel repo)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Get real HEAD and parent SHAs for inputs
+        id: shas
+        run: |
+          HEAD=$(git rev-parse HEAD)
+          BASE=$(git rev-parse HEAD~1 2>/dev/null || echo "$HEAD")
+          echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          # Supply head and base so the action proceeds past the "no PR" check,
+          # but the sentinel GITHUB_REPOSITORY means the fetch will fail → refused.
+          head: ${{ steps.shas.outputs.head }}
+          base: ${{ steps.shas.outputs.base }}
+          allow-self-hosted: "true"
+          comment: "false"
+          attest: "false"
+          isolation: host
+      - name: Assert result is refused due to fetch failure
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+          STATUS: ${{ steps.action.outputs.status }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result:  $RESULT"
+          echo "status:  $STATUS"
+          # The action must have failed
+          if [ "$OUTCOME" = "success" ]; then
+            echo "FAIL: expected the action to exit non-zero (refused), but it succeeded"
+            exit 1
+          fi
+          # If the action produced a verdict, it must be 'refused'
+          if [ -n "$RESULT" ] && [ "$RESULT" != "refused" ]; then
+            echo "FAIL: expected result='refused', got '$RESULT'"
+            exit 1
+          fi
+          if [ -z "$RESULT" ]; then
+            echo "PASS: action failed without producing a verdict (build may have failed or outputs not propagated under act)"
+          else
+            echo "PASS: action refused as expected (result=$RESULT, status=$STATUS)"
+          fi

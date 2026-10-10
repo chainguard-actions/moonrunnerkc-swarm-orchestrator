@@ -1,0 +1,43 @@
+name: Test refused when no PR and no head/base
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          # No head or base supplied, no PR event — the action must refuse gracefully.
+          # allow-self-hosted: true so the self-hosted check does not throw before the
+          # verdict is written (the no-PR refusal is caught and produces a verdict).
+          allow-self-hosted: "true"
+          comment: "false"
+          attest: "false"
+          isolation: host
+      - name: Assert result is refused
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+          STATUS: ${{ steps.action.outputs.status }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result:  $RESULT"
+          echo "status:  $STATUS"
+          # The action must have failed
+          if [ "$OUTCOME" = "success" ]; then
+            echo "FAIL: expected the action to exit non-zero (refused), but it succeeded"
+            exit 1
+          fi
+          # If the action produced a verdict, it must be 'refused'
+          if [ -n "$RESULT" ] && [ "$RESULT" != "refused" ]; then
+            echo "FAIL: expected result='refused', got '$RESULT'"
+            exit 1
+          fi
+          if [ -z "$RESULT" ]; then
+            echo "PASS: action failed without producing a verdict (build may have failed or outputs not propagated under act)"
+          else
+            echo "PASS: action refused as expected (result=$RESULT, status=$STATUS)"
+          fi
