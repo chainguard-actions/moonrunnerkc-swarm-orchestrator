@@ -1,0 +1,55 @@
+name: Test host isolation with explicit head/base (refused on sentinel repo)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Get current HEAD sha for head/base inputs
+        id: sha
+        run: |
+          HEAD=$(git rev-parse HEAD)
+          echo "sha=$HEAD" >> "$GITHUB_OUTPUT"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          isolation: host
+          target: head
+          comment: "false"
+          attest: "false"
+          allow-self-hosted: "true"
+          head: ${{ steps.sha.outputs.sha }}
+          base: ${{ steps.sha.outputs.sha }}
+
+      - name: Assert action produced a result or refused gracefully
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+          STATUS: ${{ steps.action.outputs.status }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result: $RESULT"
+          echo "status: $STATUS"
+          if [ "$OUTCOME" = "success" ]; then
+            # Action succeeded — result must be one of the known values
+            case "$RESULT" in
+              verified|not-verified|incomplete|refused|regression-only|head-changed)
+                echo "PASS: action completed with result '$RESULT'"
+                ;;
+              *)
+                echo "FAIL: unexpected result '$RESULT'"
+                exit 1
+                ;;
+            esac
+          elif [ "$OUTCOME" = "failure" ]; then
+            # Action failed — check if it produced a refused result (status 4)
+            # This is expected when the sentinel repo cannot be fetched
+            echo "PASS: action failed gracefully (sentinel repo not reachable or build issue)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

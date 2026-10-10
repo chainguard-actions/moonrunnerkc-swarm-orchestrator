@@ -1,0 +1,62 @@
+name: Test self-hosted runner refusal (no allow-self-hosted)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Get current HEAD sha for head/base inputs
+        id: sha
+        run: |
+          HEAD=$(git rev-parse HEAD)
+          echo "sha=$HEAD" >> "$GITHUB_OUTPUT"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          isolation: host
+          comment: "false"
+          attest: "false"
+          allow-self-hosted: "false"
+          head: ${{ steps.sha.outputs.sha }}
+          base: ${{ steps.sha.outputs.sha }}
+
+      - name: Assert action refused or failed gracefully
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+          STATUS: ${{ steps.action.outputs.status }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result: $RESULT"
+          echo "status: $STATUS"
+          # Under act, RUNNER_ENVIRONMENT is not 'github-hosted', so without
+          # allow-self-hosted: true the action should refuse (result=refused, status=4)
+          # or fail during the build step.
+          if [ "$OUTCOME" = "failure" ]; then
+            # Expected: action refused or failed
+            if [ "$RESULT" = "refused" ] || [ -z "$RESULT" ]; then
+              echo "PASS: action refused or failed as expected on non-github-hosted runner"
+            else
+              echo "FAIL: expected refused result but got '$RESULT'"
+              exit 1
+            fi
+          elif [ "$OUTCOME" = "success" ]; then
+            # If somehow the runner reports as github-hosted, the action may succeed
+            echo "INFO: action succeeded (runner may report as github-hosted)"
+            case "$RESULT" in
+              verified|not-verified|incomplete|refused|regression-only|head-changed)
+                echo "PASS: action completed with result '$RESULT'"
+                ;;
+              *)
+                echo "FAIL: unexpected result '$RESULT'"
+                exit 1
+                ;;
+            esac
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

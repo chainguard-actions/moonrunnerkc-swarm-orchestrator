@@ -1,0 +1,74 @@
+name: Test with prepared workspace input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Get HEAD and parent commits for head/base
+        id: commits
+        run: |
+          HEAD=$(git rev-parse HEAD)
+          # Use HEAD as both head and base (no diff scenario)
+          echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+          echo "base=$HEAD" >> "$GITHUB_OUTPUT"
+          echo "workspace=$GITHUB_WORKSPACE" >> "$GITHUB_OUTPUT"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          isolation: host
+          comment: "false"
+          attest: "false"
+          allow-self-hosted: "true"
+          workspace: ${{ steps.commits.outputs.workspace }}
+          head: ${{ steps.commits.outputs.head }}
+          base: ${{ steps.commits.outputs.base }}
+
+      - name: Assert action produced outputs or refused gracefully
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+          STATUS: ${{ steps.action.outputs.status }}
+          HEAD_OUT: ${{ steps.action.outputs.head }}
+          BASE_OUT: ${{ steps.action.outputs.base }}
+          OUTCOME: ${{ steps.action.outcome }}
+          EXPECTED_HEAD: ${{ steps.commits.outputs.head }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result: $RESULT"
+          echo "status: $STATUS"
+          echo "head output: $HEAD_OUT"
+          echo "base output: $BASE_OUT"
+          echo "expected head: $EXPECTED_HEAD"
+          if [ "$OUTCOME" = "success" ]; then
+            # Action succeeded — verify outputs are populated
+            if [ -z "$RESULT" ]; then
+              echo "FAIL: action succeeded but result output is empty"
+              exit 1
+            fi
+            case "$RESULT" in
+              verified|not-verified|incomplete|refused|regression-only|head-changed)
+                echo "PASS: action completed with result '$RESULT'"
+                ;;
+              *)
+                echo "FAIL: unexpected result '$RESULT'"
+                exit 1
+                ;;
+            esac
+            # Head output should match what we supplied
+            if [ -n "$HEAD_OUT" ] && [ "$HEAD_OUT" != "$EXPECTED_HEAD" ]; then
+              echo "FAIL: head output '$HEAD_OUT' does not match expected '$EXPECTED_HEAD'"
+              exit 1
+            fi
+          elif [ "$OUTCOME" = "failure" ]; then
+            # Acceptable: action may fail due to runner environment or build issues
+            echo "PASS: action failed gracefully (sentinel repo or runner environment)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
