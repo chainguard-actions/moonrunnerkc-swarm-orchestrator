@@ -1,0 +1,43 @@
+name: Test swarm-verify refused on self-hosted runner without allow-self-hosted
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      # Under act, RUNNER_ENVIRONMENT is not set to "github-hosted".
+      # Without allow-self-hosted=true the action throws a RefusedError BEFORE writing a
+      # verdict document, so the verify step exits non-zero and no outputs are populated.
+      # The composite action's final step then exits 1 (no status output → hits the * case).
+      # We only assert that the action failed; we do NOT assert on result/status outputs
+      # because they are empty when the action throws before writing a verdict.
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          isolation: host
+          comment: "false"
+          attest: "false"
+          # allow-self-hosted deliberately omitted (defaults to false)
+      - name: Assert action refused due to self-hosted runner
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          RESULT: ${{ steps.action.outputs.result }}
+          STATUS: ${{ steps.action.outputs.status }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result:  $RESULT"
+          echo "status:  $STATUS"
+          # The action must have failed — either because it threw before writing a verdict
+          # (result/status empty) or because it wrote a refused verdict and exited 4.
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail (self-hosted runner not allowed), got outcome=$OUTCOME"
+            exit 1
+          fi
+          # If a verdict was written, it must be refused.
+          if [ -n "$RESULT" ] && [ "$RESULT" != "refused" ]; then
+            echo "FAIL: expected result=refused or empty, got '$RESULT'"
+            exit 1
+          fi
+          echo "PASS: action failed as expected on self-hosted runner (result='$RESULT')"
