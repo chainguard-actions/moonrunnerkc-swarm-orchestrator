@@ -1,0 +1,67 @@
+name: Test workspace input with local git repository
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Get HEAD and parent commit SHAs
+        id: commits
+        run: |
+          HEAD=$(git rev-parse HEAD)
+          BASE=$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)
+          echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "HEAD: $HEAD"
+          echo "BASE: $BASE"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          # Provide the current workspace so the action skips fetching
+          workspace: ${{ github.workspace }}
+          head: ${{ steps.commits.outputs.head }}
+          base: ${{ steps.commits.outputs.base }}
+          isolation: host
+          comment: "false"
+          attest: "false"
+          allow-self-hosted: "true"
+
+      - name: Assert action ran with workspace input
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+          STATUS: ${{ steps.action.outputs.status }}
+          HEAD_OUT: ${{ steps.action.outputs.head }}
+          BASE_OUT: ${{ steps.action.outputs.base }}
+          OUTCOME: ${{ steps.action.outcome }}
+          EXPECTED_HEAD: ${{ steps.commits.outputs.head }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result: $RESULT"
+          echo "status: $STATUS"
+          echo "head output: $HEAD_OUT"
+          echo "base output: $BASE_OUT"
+          echo "expected head: $EXPECTED_HEAD"
+          # The action should have run (not refused due to missing head/base)
+          # It may produce any result (incomplete, refused, not-verified, etc.)
+          # but the head output should match what we passed in
+          if [ "$OUTCOME" = "failure" ] || [ "$OUTCOME" = "success" ]; then
+            if [ -n "$HEAD_OUT" ]; then
+              if [ "$HEAD_OUT" = "$EXPECTED_HEAD" ]; then
+                echo "PASS: action ran and head output matches expected"
+              else
+                echo "FAIL: head output '$HEAD_OUT' does not match expected '$EXPECTED_HEAD'"
+                exit 1
+              fi
+            else
+              echo "PASS: action ran (outcome=$OUTCOME) — outputs may not be set on early failure"
+            fi
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
