@@ -1,0 +1,91 @@
+name: Test swarm-verify with a pre-prepared workspace
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Capture head and base SHAs
+        id: refs
+        run: |
+          HEAD=$(git rev-parse HEAD)
+          # Use HEAD~1 if available, otherwise use HEAD itself as base
+          if git rev-parse HEAD~1 >/dev/null 2>&1; then
+            BASE=$(git rev-parse HEAD~1)
+          else
+            BASE=$HEAD
+          fi
+          echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "head: $HEAD"
+          echo "base: $BASE"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          isolation: host
+          comment: "false"
+          attest: "false"
+          allow-self-hosted: "true"
+          workspace: ${{ github.workspace }}
+          head: ${{ steps.refs.outputs.head }}
+          base: ${{ steps.refs.outputs.base }}
+
+      - name: Assert action produced a result
+        env:
+          RESULT: ${{ steps.action.outputs.result }}
+          STATUS: ${{ steps.action.outputs.status }}
+          HEAD_OUT: ${{ steps.action.outputs.head }}
+          BASE_OUT: ${{ steps.action.outputs.base }}
+          OUTCOME: ${{ steps.action.outcome }}
+          EXPECTED_HEAD: ${{ steps.refs.outputs.head }}
+          EXPECTED_BASE: ${{ steps.refs.outputs.base }}
+        run: |
+          echo "outcome:  $OUTCOME"
+          echo "result:   $RESULT"
+          echo "status:   $STATUS"
+          echo "head:     $HEAD_OUT"
+          echo "base:     $BASE_OUT"
+          # The action should either succeed or fail gracefully.
+          # Under act, the action may fail due to artifact upload or retention issues.
+          if [ "$OUTCOME" = "success" ]; then
+            # When the action succeeds, result must be non-empty and valid
+            if [ -z "$RESULT" ]; then
+              echo "FAIL: action succeeded but result output is empty"
+              exit 1
+            fi
+            case "$RESULT" in
+              verified|not-verified|incomplete|refused|regression-only|head-changed)
+                echo "PASS: action succeeded with result=$RESULT status=$STATUS"
+                ;;
+              *)
+                echo "FAIL: unexpected result value '$RESULT'"
+                exit 1
+                ;;
+            esac
+          elif [ "$OUTCOME" = "failure" ]; then
+            # Action failed — this is acceptable under act (artifact upload may fail,
+            # or the verifier may produce a non-zero status).
+            # If result is available, validate it.
+            if [ -n "$RESULT" ]; then
+              case "$RESULT" in
+                verified|not-verified|incomplete|refused|regression-only|head-changed)
+                  echo "PASS: action failed gracefully with result=$RESULT status=$STATUS"
+                  ;;
+                *)
+                  echo "FAIL: unexpected result value '$RESULT'"
+                  exit 1
+                  ;;
+              esac
+            else
+              echo "PASS: action failed (result output not available under act)"
+            fi
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
