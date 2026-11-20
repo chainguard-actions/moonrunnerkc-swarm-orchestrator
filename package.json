@@ -1,0 +1,71 @@
+{
+  "name": "swarm-orchestrator",
+  "version": "15.0.0",
+  "description": "A single-bash-tool coding agent judged by swarm-verify: it reruns the project's own checks on the change in a clean checkout and signs the verdict as an in-toto attestation.",
+  "keywords": [
+    "coding-agent",
+    "agent-loop",
+    "verification",
+    "in-toto",
+    "dsse",
+    "sigstore",
+    "attestation",
+    "held-out-tests",
+    "ci",
+    "cli",
+    "typescript"
+  ],
+  "homepage": "https://github.com/moonrunnerkc/swarm-orchestrator#readme",
+  "bugs": {
+    "url": "https://github.com/moonrunnerkc/swarm-orchestrator/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moonrunnerkc/swarm-orchestrator.git"
+  },
+  "private": false,
+  "type": "module",
+  "bin": {
+    "swarm": "dist/cli.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "node scripts/build-dist.mjs",
+    "build:verify": "node scripts/build-swarm-verify.mjs",
+    "dev": "mkdir -p .swarm/dev-workspace && node src/cli.ts --workspace .swarm/dev-workspace",
+    "format": "biome format --write",
+    "gates": "npm run checks && npm run caps && npm run typecheck && npm run lint && npm test",
+    "checks": "node scripts/check-doc-paths.mjs",
+    "lint": "biome check",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run gates && npm run build",
+    "test": "vitest run",
+    "test:integration": "SWARM_TEST_PROFILE=integration vitest run",
+    "test:unit": "SWARM_TEST_PROFILE=unit vitest run",
+    "typecheck": "tsc --noEmit",
+    "caps": "node scripts/check-caps.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.8",
+    "@types/node": "^24.13.3",
+    "@vitest/coverage-v8": "4.1.11",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  },
+  "dependencies": {
+    "smol-toml": "^1.8.0",
+    "zod": "^4.4.3"
+  },
+  "license": "ISC",
+  "files": [
+    "dist/",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md"
+  ],
+  "workspaces": [
+    "packages/swarm-verify"
+  ]
+}

@@ -1,0 +1,89 @@
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { compilerPath, sourceDescription } from "./build-dist.mjs";
+
+describe("when the build has to run", () => {
+  /**
+   * The defect this covers, found by installing rather than by reading: dist/ is not
+   * committed, and npm runs `prepare` for a git install but never `prepublishOnly`. With only
+   * the latter declared, `npm install github:owner/repo#tag` resolved, printed no error, and
+   * left a package with no dist/ and no swarm binary. A broken install that exits 0 is worse
+   * than one that fails, and the registry publish being blocked is exactly when someone
+   * reaches for the git ref.
+   */
+  it("builds on prepare, which is the hook a git install runs", async () => {
+    const manifest = JSON.parse(
+      await readFile(join(import.meta.dirname, "..", "package.json"), "utf8"),
+    );
+
+    expect(manifest.scripts.prepare).toBe("npm run build");
+    expect(manifest.files).toContain("dist/");
+  });
+
+  /**
+   * The defect this covers, found by publishing rather than by reading: `npm publish
+   * --provenance` signs a statement naming the repository it was built from, and the registry
+   * refuses the tarball with E422 unless package.json's repository.url matches it. The field
+   * was absent, so the signed statement said one thing and the manifest said "", and the
+   * publish failed after the provenance had already reached the transparency log. There is no
+   * way to notice that from the source tree, which is why it is asserted here.
+   */
+  /**
+   * The defect this covers, found by a person running the command the readme printed: npm
+   * inherits the global context into its git-dependency preparation, so `npm install -g <git
+   * ref>` places the clone as a root package, never installs the clone's devDependencies, and
+   * then runs `prepare`. The build spawned `node_modules/.bin/tsc` and the reader got ENOENT
+   * on a path they never typed. The command cannot be made to work from here, so the least
+   * this build owes them is a sentence saying which command does.
+   */
+  it("says which install to use when the compiler its build needs is absent", () => {
+    expect(() => compilerPath(join(import.meta.dirname, "..", "no-such-tree"))).toThrow(
+      /npm install -g swarm-orchestrator/,
+    );
+    expect(() => compilerPath(join(import.meta.dirname, "..", "no-such-tree"))).toThrow(
+      /without -g/,
+    );
+  });
+
+  it("names the repository the provenance statement is checked against", async () => {
+    const manifest = JSON.parse(
+      await readFile(join(import.meta.dirname, "..", "package.json"), "utf8"),
+    );
+
+    expect(manifest.repository.url).toBe(
+      "git+https://github.com/moonrunnerkc/swarm-orchestrator.git",
+    );
+  });
+});
+
+describe("what a build records about the source it came from", () => {
+  it("names the commit where no release tag is reachable, and the tag where one is", () => {
+    // A shallow clone of the branch reported "14.4.0" on a remote install walk: describe found
+    // no tag, the build recorded nothing, and the version line read as the release.
+    const repository = mkdtempSync(join(tmpdir(), "swarm-describe-"));
+    try {
+      const git = (...args) =>
+        execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.com", ...args], {
+          cwd: repository,
+          encoding: "utf8",
+        }).trim();
+      git("init", "-q");
+      writeFileSync(join(repository, "a.txt"), "a\n");
+      git("add", "a.txt");
+      git("commit", "-qm", "a");
+      const commit = git("rev-parse", "--short", "HEAD");
+      expect(sourceDescription(repository)).toBe(commit);
+      git("tag", "v1.2.3");
+      expect(sourceDescription(repository)).toBe("v1.2.3");
+      writeFileSync(join(repository, "a.txt"), "b\n");
+      expect(sourceDescription(repository)).toBe("v1.2.3-dirty");
+    } finally {
+      rmSync(repository, { recursive: true, force: true });
+    }
+    expect(sourceDescription(tmpdir())).toBeNull();
+  });
+});

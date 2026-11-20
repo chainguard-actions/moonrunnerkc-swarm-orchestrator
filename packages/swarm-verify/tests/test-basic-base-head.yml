@@ -1,0 +1,55 @@
+name: Test verify against explicit base HEAD
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - name: Prepare
+        run: |
+          git config --global user.email "test@example.com"
+          git config --global user.name "Test User"
+          rm -rf "$GITHUB_WORKSPACE/.swarm/verify"
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          base: HEAD
+      - name: Assert action ran and any attestation verifies
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "success" ] && [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
+          if ! command -v node >/dev/null; then
+            echo "FAIL: setup-node did not provide node"
+            exit 1
+          fi
+          node --version
+          MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
+          if [ "$MAJOR" -lt 22 ]; then
+            echo "FAIL: expected node >= 22, got $MAJOR"
+            exit 1
+          fi
+          DIR="$GITHUB_WORKSPACE/.swarm/verify"
+          ls -la "$DIR" 2>/dev/null || true
+          if [ -f "$DIR/attestation.sigstore.json" ]; then
+            VERIFY="$(find "$HOME/.npm/_npx" -path '*node_modules/swarm-verify/verify.mjs' 2>/dev/null | head -n1)"
+            KEY="$(ls "$DIR"/*.pem 2>/dev/null | head -n1)"
+            echo "verify.mjs: $VERIFY  key: $KEY"
+            if [ -n "$VERIFY" ] && [ -n "$KEY" ]; then
+              node "$VERIFY" "$DIR/attestation.sigstore.json" --key "$KEY" || { echo "FAIL: attestation did not verify"; exit 1; }
+            fi
+            echo "PASS: attestation written"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "FAIL: action succeeded but wrote no attestation"
+            exit 1
+          else
+            echo "PASS: action ran and exited non-zero (nothing measured / failing checks)"
+          fi

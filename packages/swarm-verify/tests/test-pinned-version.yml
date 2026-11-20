@@ -1,0 +1,65 @@
+name: Test pinned swarm-verify version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - name: Prepare
+        run: |
+          git config --global user.email "test@example.com"
+          git config --global user.name "Test User"
+          rm -rf "$GITHUB_WORKSPACE/.swarm/verify"
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          base: HEAD
+          version: 2.0.0
+      - name: Assert pinned version was resolved and the step ran
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "success" ] && [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
+          # npx may resolve swarm-verify@2.0.0 either from the npm registry
+          # (into the npx cache) or from the local npm workspace package of
+          # the same name and version (this monorepo ships swarm-verify 2.0.0).
+          CACHE="$(npm config get cache 2>/dev/null || echo "$HOME/.npm")"
+          echo "npm cache: $CACHE"
+          PKG="$(find "$CACHE/_npx" "$HOME/.npm/_npx" -path '*node_modules/swarm-verify/package.json' 2>/dev/null | head -n1)"
+          echo "npx-cached package.json: $PKG"
+          if [ -n "$PKG" ]; then
+            V="$(node -p "require('$PKG').version")"
+            echo "installed version: $V"
+            if [ "$V" != "2.0.0" ]; then
+              echo "FAIL: expected swarm-verify 2.0.0 in npx cache, got $V"
+              exit 1
+            fi
+          else
+            LOCAL="$(find "$GITHUB_WORKSPACE" -path '*/node_modules' -prune -o -name package.json -path '*swarm-verify/package.json' -print 2>/dev/null | head -n1)"
+            echo "local workspace package.json: $LOCAL"
+            if [ -z "$LOCAL" ]; then
+              echo "FAIL: swarm-verify was neither installed by npx nor present locally"
+              exit 1
+            fi
+            V="$(node -p "require('$LOCAL').version")"
+            echo "local workspace version: $V"
+            if [ "$V" != "2.0.0" ]; then
+              echo "FAIL: npx did not fetch 2.0.0 and local package is $V"
+              exit 1
+            fi
+            echo "npx resolved the pinned version to the local workspace package"
+          fi
+          DIR="$GITHUB_WORKSPACE/.swarm/verify"
+          if [ "$OUTCOME" = "success" ] && [ ! -f "$DIR/attestation.sigstore.json" ]; then
+            echo "FAIL: action succeeded but wrote no attestation"
+            exit 1
+          fi
+          echo "PASS"
