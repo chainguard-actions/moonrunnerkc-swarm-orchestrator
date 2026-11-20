@@ -1,0 +1,76 @@
+name: Test host isolation on a passing prepared workspace
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Prepare a tiny fixture repository with base and head commits
+        id: prep
+        run: |
+          set -e
+          REPO="$RUNNER_TEMP/verify-repo"
+          rm -rf "$REPO"
+          mkdir -p "$REPO"
+          cd "$REPO"
+          git init -q -b main .
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          cat > package.json <<'EOF'
+          {"name":"fixture","version":"1.0.0","private":true,"scripts":{"test":"node test.js"}}
+          EOF
+          cat > package-lock.json <<'EOF'
+          {"name":"fixture","version":"1.0.0","lockfileVersion":3,"requires":true,"packages":{"":{"name":"fixture","version":"1.0.0"}}}
+          EOF
+          cat > lib.js <<'EOF'
+          module.exports = (a, b) => a + b;
+          EOF
+          cat > test.js <<'EOF'
+          const assert = require('assert');
+          const add = require('./lib.js');
+          assert.strictEqual(add(1, 2), 3);
+          console.log('ok');
+          EOF
+          git add -A
+          git commit -q -m base
+          echo "base=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "// head change" >> lib.js
+          git commit -q -am head
+          echo "head=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "dir=$REPO" >> "$GITHUB_OUTPUT"
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          isolation: host
+          workspace: ${{ steps.prep.outputs.dir }}
+          head: ${{ steps.prep.outputs.head }}
+          base: ${{ steps.prep.outputs.base }}
+          comment: "false"
+          attest: "false"
+          allow-self-hosted: "true"
+      - name: Assert outputs are consistent
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          STATUS: ${{ steps.action.outputs.status }}
+          RESULT: ${{ steps.action.outputs.result }}
+          HEAD_OUT: ${{ steps.action.outputs.head }}
+          VERDICT: ${{ steps.action.outputs.verdict }}
+          DIGEST: ${{ steps.action.outputs.verdict-digest }}
+          COMMENT: ${{ steps.action.outputs.comment }}
+          ATTESTATION: ${{ steps.action.outputs.attestation }}
+          EXPECTED_HEAD: ${{ steps.prep.outputs.head }}
+        run: |
+          echo "outcome=$OUTCOME status=$STATUS result=$RESULT head=$HEAD_OUT"
+          echo "verdict=$VERDICT digest=$DIGEST comment=$COMMENT attestation=$ATTESTATION"
+          [ "$OUTCOME" = "success" ] || { echo "FAIL: expected success, got '$OUTCOME'"; exit 1; }
+          # Without a goal contract a passing run is a regression-only pass (status 0).
+          case "$RESULT" in verified|regression-only) ;; *) echo "FAIL: bad result '$RESULT'"; exit 1 ;; esac
+          [ "$STATUS" = "0" ] || { echo "FAIL: expected status 0, got '$STATUS'"; exit 1; }
+          [ "$HEAD_OUT" = "$EXPECTED_HEAD" ] || { echo "FAIL: head mismatch"; exit 1; }
+          [ -n "$VERDICT" ] && [ -f "$VERDICT" ] || { echo "FAIL: verdict file missing"; exit 1; }
+          case "$DIGEST" in sha256:*) ;; *) echo "FAIL: bad digest '$DIGEST'"; exit 1 ;; esac
+          [ "$ATTESTATION" = "skipped" ] || { echo "FAIL: attestation should be skipped"; exit 1; }
+          [ "$COMMENT" = "skipped" ] || { echo "FAIL: comment should be skipped"; exit 1; }
+          echo "PASS"
